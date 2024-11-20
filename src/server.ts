@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
 import morgan from "morgan";
 import cors, { CorsOptions } from "cors";
 import authRouter from "@router/auth";
@@ -26,10 +27,12 @@ app.use("/auth", authRouter);
 app.use("/tourists", touristsRouter);
 app.use("/owners", ownersRouter);
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('Express + TypeScript Server Working!');
+app.get("/", (req: Request, res: Response) => {
+  res.send("Express + TypeScript Server Working!");
 });
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });
+
+const prisma = new PrismaClient();
