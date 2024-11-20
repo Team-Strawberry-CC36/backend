@@ -13,6 +13,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Users {
+  id Int @id @default(autoincrement())
+  user_name String @db.VarChar(255)
+  role Role @default(USER)
+  updated_at DateTime @default(now())
+  places Places[]
+}
+
 model Places {
   id  Int @id @default(autoincrement())
+  user_id Int
+  name String @db.VarChar(255)
+  address String // NOTE Would be enought?
+  general_info String @db.Text
+  created_at DateTime @default(now())
+  edited_at DateTime @default(now())
+  user Users @relation(fields: [user_id], references: [id])
+}
+
+
+enum Role {
+  OWNER
+  USER
+  BOTH
 }
