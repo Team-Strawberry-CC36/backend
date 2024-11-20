@@ -9,7 +9,24 @@
     "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
     "start": "node dist/server.js",
     "dev": "nodemon -r tsconfig-paths/register src/server.ts",
-    "test2": "NODE_ENV=test mocha --check-leaks -r tsconfig-paths/register -r ts-node/register \"test/**/*.test.ts\""
+    "test2": "mocha --check-leaks --require tsconfig-paths/register --require ts-node/register \"test/**/*.test.ts\""
+  },
+  "mocha": {
+    "type": "commonjs",
+    "require": [
+      "ts-node/register",
+      "tsconfig-paths/register"
+    ],
+    "checkLeaks": true,
+    "extension": [
+      "ts"
+    ]
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs",
+      "target": "ES6"
+    }
   },
   "author": "Team Strawberry",
   "license": "ISC",
@@ -29,10 +46,10 @@
     "@types/node": "^22.9.1",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
-    "chai": "^5.1.2",
+    "chai": "^4.2.0",
     "concurrently": "^9.1.0",
     "eslint": "^9.15.0",
-    "mocha": "^10.8.2",
+    "mocha": "^8.2.1",
     "nodemon": "^3.1.7",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
