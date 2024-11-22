@@ -13,14 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Users {
-  id           Int           @id @default(autoincrement())
-  user_name    String        @db.VarChar(255)
+model Users_accounts {
+  id Int @id @default(autoincrement())
+  username    String        @db.VarChar(255)
   created_at   DateTime      @default(now())
   experiences  Experiences[]
-  places       Places[]
-  place_rule   Place_rule    @relation(fields: [place_ruleId], references: [id])
-  place_ruleId Int
 }
 
 model Experiences {
@@ -31,32 +28,42 @@ model Experiences {
   experience_type String   @db.VarChar(255)
   created_at      DateTime @default(now())
   edited_at       DateTime @default(now())
-  user            Users    @relation(fields: [user_id], references: [id])
+  users_accounts Users_accounts @relation(fields: [user_id], references: [id])
+  place Places @relation(fields: [place_id], references: [id])
 }
 
 model Places {
   id           Int      @id @default(autoincrement())
-  place_type   PlaceType     @default(ONSEN)
+  place_type   PlaceType     @default(ONSEN) // NOTE Needs to be more strict
   name         String   @db.VarChar(255)
   address      String   @db.VarChar(255)
+  latitude     Decimal @db.Decimal(9, 6)
+  longitude    Decimal @db.Decimal(9, 6)
   general_info String   @db.Text
   created_at   DateTime @default(now())
   edited_at    DateTime @default(now())
-  Users        Users?   @relation(fields: [usersId], references: [id])
-  usersId      Int?
+  experiences Experiences[]
+  images Images[]
 }
 
 enum PlaceType {
   SHRINE
-  RESTAURANT
   ONSEN
+  RESTAURANT
 }
 
-model Place_rule {
+model Images {
+  id Int @id @default(autoincrement())
+  place_id Int
+  author_name String @db.VarChar()
+  file_data String @db.Text
+  place Places @relation(fields: [place_id], references: [id])
+}
+
+model Place_etiquette {
   id        Int     @id @default(autoincrement())
   place_id  Int
-  etiquette Int
-  Users     Users[]
+  etiquette_id Int
 }
 
 model Etiquette {
