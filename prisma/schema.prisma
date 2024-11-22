@@ -14,27 +14,52 @@ datasource db {
 }
 
 model Users {
-  id Int @id @default(autoincrement())
-  user_name String @db.VarChar(255)
-  role Role @default(USER)
-  updated_at DateTime @default(now())
-  places Places[]
+  id           Int           @id @default(autoincrement())
+  user_name    String        @db.VarChar(255)
+  created_at   DateTime      @default(now())
+  experiences  Experiences[]
+  places       Places[]
+  place_rule   Place_rule    @relation(fields: [place_ruleId], references: [id])
+  place_ruleId Int
+}
+
+model Experiences {
+  id              Int      @id @default(autoincrement())
+  place_id        Int
+  user_id         Int
+  experience      String   @db.Text
+  experience_type String   @db.VarChar(255)
+  created_at      DateTime @default(now())
+  edited_at       DateTime @default(now())
+  user            Users    @relation(fields: [user_id], references: [id])
 }
 
 model Places {
-  id  Int @id @default(autoincrement())
-  user_id Int
-  name String @db.VarChar(255)
-  address String // NOTE Would be enought?
-  general_info String @db.Text
-  created_at DateTime @default(now())
-  edited_at DateTime @default(now())
-  user Users @relation(fields: [user_id], references: [id])
+  id           Int      @id @default(autoincrement())
+  place_type   PlaceType     @default(ONSEN)
+  name         String   @db.VarChar(255)
+  address      String   @db.VarChar(255)
+  general_info String   @db.Text
+  created_at   DateTime @default(now())
+  edited_at    DateTime @default(now())
+  Users        Users?   @relation(fields: [usersId], references: [id])
+  usersId      Int?
 }
 
+enum PlaceType {
+  SHRINE
+  RESTAURANT
+  ONSEN
+}
 
-enum Role {
-  OWNER
-  USER
-  BOTH
+model Place_rule {
+  id        Int     @id @default(autoincrement())
+  place_id  Int
+  etiquette Int
+  Users     Users[]
+}
+
+model Etiquette {
+  id    Int    @id @default(autoincrement())
+  label String @db.VarChar()
 }
