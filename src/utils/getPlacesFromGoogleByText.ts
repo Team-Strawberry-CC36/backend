@@ -24,14 +24,14 @@ export default async function getPlacesFromGoogleByText(searchText: string) {
     "X-Goog-Api-Key": apiKey,
   };
 
-  const foo = {
+  const searchcontent = {
     textQuery: searchText,
   };
 
   const query = await fetch(uri, {
     method: "POST",
     headers: headerForGooglePlacesApi,
-    body: JSON.stringify(foo),
+    body: JSON.stringify(searchcontent),
   });
   return await query.json();
 }

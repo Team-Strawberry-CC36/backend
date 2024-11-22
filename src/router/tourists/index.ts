@@ -8,7 +8,7 @@ touristsRouter.get("/", (req, res) => {
   res.send("Hi");
 });
 
-touristsRouter.post("/descriptions", async (req, res) => {
+touristsRouter.post("/description", async (req, res) => {
   const { searchText } = req.body;
 
   const googlePlacesResult = await getPlacesFromGoogleByText(searchText);
