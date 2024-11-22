@@ -14,11 +14,11 @@ const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
-const corsOptions : CorsOptions = {
-    origin: `${process.env.FRONTEND_URL}` || "http://localhost:3000",
-    optionsSuccessStatus: 200,
-    credentials: true,
-}
+const corsOptions: CorsOptions = {
+  origin: `${process.env.FRONTEND_URL}` || "http://localhost:3000",
+  optionsSuccessStatus: 200,
+  credentials: true,
+};
 app.use(cors(corsOptions));
 app.use(morgan("dev"));
 
