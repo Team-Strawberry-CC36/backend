@@ -39,7 +39,12 @@ model Places {
   address      String   @db.VarChar(255)
   latitude     Decimal @db.Decimal(9, 6)
   longitude    Decimal @db.Decimal(9, 6)
-  google_place_id String? @db.VarChar(255)
+  google_place_id String? @unique @db.VarChar(255)
+  google_map_uri String? @db.Text
+  website_uri String? @db.Text
+  regular_opening_hours String? @db.Text
+  formatted_address String? @db.VarChar(255)
+  photos String? @db.Text
   general_info String   @db.Text
   created_at   DateTime @default(now())
   edited_at    DateTime @default(now())
