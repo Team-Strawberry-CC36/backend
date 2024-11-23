@@ -44,7 +44,6 @@ model Places {
   website_uri String? @db.Text
   regular_opening_hours String? @db.Text
   formatted_address String? @db.VarChar(255)
-  photos String? @db.Text
   general_info String   @db.Text
   created_at   DateTime @default(now())
   edited_at    DateTime @default(now())
@@ -63,7 +62,7 @@ model Images {
   place_id Int
   author_name String @db.VarChar()
   file_data String @db.Text
-  place Places @relation(fields: [place_id], references: [id])
+  place Places @relation(fields: [place_id], references: [id], onDelete: Cascade)
 }
 
 model Place_etiquette {
