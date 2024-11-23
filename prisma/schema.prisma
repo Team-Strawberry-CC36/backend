@@ -34,11 +34,12 @@ model Experiences {
 
 model Places {
   id           Int      @id @default(autoincrement())
-  place_type   PlaceType     @default(ONSEN) // NOTE Needs to be more strict
+  place_type   PlaceType     @default(ONSEN)
   name         String   @db.VarChar(255)
   address      String   @db.VarChar(255)
   latitude     Decimal @db.Decimal(9, 6)
   longitude    Decimal @db.Decimal(9, 6)
+  google_place_id String? @db.VarChar(255)
   general_info String   @db.Text
   created_at   DateTime @default(now())
   edited_at    DateTime @default(now())

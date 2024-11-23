@@ -12,7 +12,6 @@ touristsRouter.post("/description", async (req, res) => {
   const { searchText } = req.body;
 
   const googlePlacesResult = await getPlacesFromGoogleByText(searchText);
-  console.log(googlePlacesResult);
 });
 
 export default touristsRouter;
