@@ -12,7 +12,7 @@ function formatPath(input: string) {
   return "";
 }
 
-export default class GoogleApi {
+export default class GoogleClient {
   private apiKey!: string;
   // Google places Library for making requests!!
   private placesClient!: PlacesClient;
@@ -63,7 +63,6 @@ export default class GoogleApi {
   }
 
 
-  // Not implemented
   async photoByPlace(ref: string): Promise<string> {
     const placeId = formatPath(ref);
     const localUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${placeId}&key=${this.apiKey}`
