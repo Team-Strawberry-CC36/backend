@@ -46,6 +46,7 @@ router.patch("/places/:id", async (req: Request, res: Response) => {
     });
     res.json({ updatedPlace });
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error });
   }
 });
@@ -78,6 +79,7 @@ router.post("/places/:id/experiences", async (req: Request, res: Response) => {
     });
     res.status(201).json(newExperience);
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error });
   }
 });
@@ -87,7 +89,7 @@ router.patch(
   "/places/:id/experiences/:expId",
   async (req: Request, res: Response) => {
     try {
-      const expID = req.params;
+      const { expID } = req.params;
       const updateData = req.body;
       const updatedExperience = await prisma.experiences.update({
         where: { id: Number(expID) },
@@ -95,6 +97,7 @@ router.patch(
       });
       res.json(updatedExperience);
     } catch (error) {
+      console.error(error);
       res.status(400).json({ error });
     }
   }
