@@ -18,6 +18,7 @@ router.get("/places", async (req: Request, res: Response) => {
     });
     res.json(places);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error });
   }
 });
@@ -31,6 +32,7 @@ router.post("/places", async (req: Request, res: Response) => {
     });
     res.status(201).json(newPlace);
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error });
   }
 });
@@ -60,6 +62,7 @@ router.delete("/places/:id", async (req: Request, res: Response) => {
     });
     res.status(204).send();
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error });
   }
 });
@@ -71,6 +74,7 @@ router.post("/places/:id/experiences", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const experienceData = req.body;
+    console.log(experienceData);
     const newExperience = await prisma.experiences.create({
       data: {
         ...experienceData,
