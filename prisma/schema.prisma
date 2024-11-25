@@ -25,7 +25,7 @@ model Experiences {
   place_id        Int
   user_id         Int
   experience      String   @db.Text
-  experience_type String   @db.VarChar(255)
+  place_etiquette_id Int?
   created_at      DateTime @default(now())
   edited_at       DateTime @default(now())
   users_accounts Users_accounts @relation(fields: [user_id], references: [id])
@@ -39,10 +39,8 @@ model Places {
   address      String   @db.VarChar(255)
   latitude     Decimal @db.Decimal(9, 6)
   longitude    Decimal @db.Decimal(9, 6)
-  google_place_id String? @unique @db.VarChar(255)
-  google_map_uri String? @db.Text
+  google_place_id String @unique @db.VarChar(255)
   website_uri String? @db.Text
-  regular_opening_hours String? @db.Text
   formatted_address String? @db.VarChar(255)
   general_info String   @db.Text
   created_at   DateTime @default(now())
