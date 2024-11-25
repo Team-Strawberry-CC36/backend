@@ -28,6 +28,8 @@ model Experiences {
   place_etiquette_id Int?
   created_at      DateTime @default(now())
   edited_at       DateTime @default(now())
+  place_etiquette      Place_etiquette?    @relation(fields: [place_etiquette_id], references: [id]) // Add the relation
+
   users_accounts Users_accounts @relation(fields: [user_id], references: [id])
   place Places @relation(fields: [place_id], references: [id])
 }
@@ -67,9 +69,11 @@ model Place_etiquette {
   id        Int     @id @default(autoincrement())
   place_id  Int
   etiquette_id Int
+  experiences  Experiences[]
 }
 
 model Etiquette {
   id    Int    @id @default(autoincrement())
+  place_id Int
   label String @db.VarChar()
 }
