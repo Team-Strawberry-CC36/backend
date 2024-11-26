@@ -12,6 +12,11 @@ function formatPath(input: string) {
   return "";
 }
 
+const tokyoCenterLocation = {
+  lat: 35.6764,
+  lon: 139.65,
+};
+
 export default class GoogleClient {
   private apiKey!: string;
   // Google places Library for making requests!!
@@ -33,12 +38,14 @@ export default class GoogleClient {
   async textSearch(textQuery: string, location?: any) {
     // Properties to query
     const fields = [
+      "types",
+      // lab
       "id",
+      "displayName",
       "formattedAddress",
       "location",
       "googleMapsUri",
       "websiteUri",
-      "regularOpeningHours",
       "photos",
     ];
 
@@ -50,10 +57,10 @@ export default class GoogleClient {
         locationBias: {
           circle: {
             center: {
-              latitude: 37,
-              longitude: 37,
+              latitude: tokyoCenterLocation.lat,
+              longitude: tokyoCenterLocation.lon,
             },
-            radius: 500,
+            radius: 1000,
           },
         },
       },
@@ -69,17 +76,27 @@ export default class GoogleClient {
     return query[0].places;
   }
 
-  async photoByPlace(ref: string): Promise<string> {
+  async photoByPlace(ref: string): Promise<string | null> {
     const placeId = formatPath(ref);
     const localUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${placeId}&key=${this.apiKey}`;
+
     const res = await fetch(localUrl, {
       method: "GET",
     });
 
+    if (!res.ok) {
+      console.error("Error fetching the photo:", res.statusText);
+      return null;
+    }
+
     const bytes = await res.arrayBuffer();
+    const base64 = arrayBufferToBase64(bytes);
 
-    // [ ] Convert to base64 and return it
-
-    return null;
+    return base64;
   }
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bufferNode = Buffer.from(buffer);
+  return bufferNode.toString("base64");
 }
