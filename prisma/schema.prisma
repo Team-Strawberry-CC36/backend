@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,7 +10,9 @@ datasource db {
 model Users_accounts {
   id Int @id @default(autoincrement())
   username    String        @db.VarChar(255)
+  // Time values
   created_at   DateTime      @default(now())
+  // Relationships
   experiences  Experiences[]
 }
 
@@ -25,18 +21,19 @@ model Experiences {
   place_id        Int
   user_id         Int
   experience      String   @db.Text
-  place_etiquette_id Int?
+  // Time values
+  visited_at      DateTime @default(now())
   created_at      DateTime @default(now())
   edited_at       DateTime @default(now())
-  place_etiquette      Place_etiquette?    @relation(fields: [place_etiquette_id], references: [id]) // Add the relation
-
+  // Relationships
+  etiquettes Etiquette_per_experiences[]
   users_accounts Users_accounts @relation(fields: [user_id], references: [id])
   place Places @relation(fields: [place_id], references: [id])
 }
 
 model Places {
   id           Int      @id @default(autoincrement())
-  place_type   PlaceType     @default(ONSEN)
+  place_type   PlaceType
   name         String   @db.VarChar(255)
   address      String   @db.VarChar(255)
   latitude     Decimal @db.Decimal(9, 6)
@@ -45,16 +42,13 @@ model Places {
   website_uri String? @db.Text
   formatted_address String? @db.VarChar(255)
   general_info String   @db.Text
+  // Time values
   created_at   DateTime @default(now())
   edited_at    DateTime @default(now())
+  // Experiences
   experiences Experiences[]
   images Images[]
-}
-
-enum PlaceType {
-  SHRINE
-  ONSEN
-  RESTAURANT
+  etiquettes Etiquettes_per_places[]
 }
 
 model Images {
@@ -62,18 +56,47 @@ model Images {
   place_id Int
   author_name String @db.VarChar()
   file_data String @db.Text
+  // Relationships
   place Places @relation(fields: [place_id], references: [id], onDelete: Cascade)
 }
 
-model Place_etiquette {
+model Etiquettes_per_places {
   id        Int     @id @default(autoincrement())
   place_id  Int
+  etiquette_id  Int
+  status EtiquetteStatus
+  // Relationships
+  etiquette Etiquette @relation(fields: [etiquette_id], references: [id])
+  places Places @relation(fields: [place_id], references: [id])
+}
+
+model Etiquette_per_experiences {
+  id  Int @id @default(autoincrement())
+  experience_id Int
   etiquette_id Int
-  experiences  Experiences[]
+  // Relationships
+  experience Experiences @relation(fields: [experience_id], references: [id])
+  etiquette Etiquette @relation(fields: [etiquette_id], references: [id])
 }
 
 model Etiquette {
   id    Int    @id @default(autoincrement())
   place_id Int
   label String @db.VarChar()
+  place_type PlaceType
+  // Relationships
+  EtiquettePerPlaces Etiquettes_per_places[]
+  EtiquettePerExperience Etiquette_per_experiences[]
+}
+
+// Enums
+enum PlaceType {
+  SHRINE
+  ONSEN
+  RESTAURANT
+}
+
+enum EtiquetteStatus {
+  ALLOWED
+  NOT_ALLOWED
 }
