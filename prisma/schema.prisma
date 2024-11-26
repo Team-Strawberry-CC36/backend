@@ -81,6 +81,7 @@ model Etiquette_per_experiences {
 
 model Etiquette {
   id    Int    @id @default(autoincrement())
+  place_id Int
   label String @db.VarChar()
   place_type PlaceType
   // Relationships
