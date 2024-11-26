@@ -13,6 +13,7 @@
   "author": "Team Strawberry",
   "license": "ISC",
   "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.4.0",
     "@googlemaps/js-api-loader": "^1.16.8",
     "@googlemaps/places": "^1.8.0",
     "@prisma/client": "^5.22.0",

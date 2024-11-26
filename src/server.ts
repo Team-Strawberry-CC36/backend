@@ -6,6 +6,7 @@ import cors, { CorsOptions } from "cors";
 import "dotenv/config";
 
 import router from "./router";
+import testingRouter from "@router/testing";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -21,6 +22,8 @@ app.use(cors(corsOptions));
 app.use(morgan("dev"));
 
 app.use("/", router);
+
+app.use("/testing", testingRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server Working!");

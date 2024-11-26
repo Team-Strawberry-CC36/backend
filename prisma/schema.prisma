@@ -40,7 +40,6 @@ model Places {
   longitude    Decimal @db.Decimal(9, 6)
   google_place_id String @unique @db.VarChar(255)
   website_uri String? @db.Text
-  formatted_address String? @db.VarChar(255)
   general_info String   @db.Text
   // Time values
   created_at   DateTime @default(now())
