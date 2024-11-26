@@ -1,11 +1,8 @@
 import express, { Request, Response, Router } from "express";
 import { PrismaClient } from "@prisma/client";
-// import GeneralModel from "src/models";
 
 const prisma = new PrismaClient();
 const router: Router = express.Router();
-
-// --! Places andpoints
 
 //Retrieve the Place interfaced object
 router.get("/places", async (req: Request, res: Response) => {
