@@ -73,12 +73,15 @@ router.delete("/places/:id", async (req: Request, res: Response) => {
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const experienceData = req.body;
-    console.log(experienceData);
+    const { user_id, selectedEtiquette, experienceText } = req.body;
     const newExperience = await prisma.experiences.create({
       data: {
-        ...experienceData,
+        user_id: user_id,
         place_id: Number(id),
+        experience: experienceText,
+        place_etiquette_id: selectedEtiquette
+          ? Number(selectedEtiquette)
+          : null,
       },
     });
     res.status(201).json(newExperience);
