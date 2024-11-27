@@ -2,6 +2,7 @@ import GoogleClient from "@utils/googleClient";
 import { Request, Response, Router } from "express";
 import { PrismaClient, PlaceType, Places } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
+import { IPlace, IPlaceType } from "src/interfaces/places";
 
 enum StatusCode {
   BadBehavior = 400,
@@ -90,23 +91,34 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
       },
     });
 
-    const transformedOutput: IPlace[] = output.map((place) => ({
-      id: place.id,
-      name: place.name,
-      address: place.address,
-      placeType: place.place_type,
-      location: {
-        latitude: place.latitude.toNumber(),
-        longitude: place.longitude.toNumber(),
-      },
-      etiquettes: place.etiquettes || undefined,
-      experiences: place.experiences || undefined,
-      photos: place.photos || undefined,
-      metadata: {
-        createdAt: place.created_at,
-        updatedAt: place.updated_at,
-      },
-    }));
+    const transformedOutput: IPlace[] = output.map((place) => {
+      const test = (placeUpperCased: string) => {
+        let x: any = {
+          SHRINE: "shrine",
+          ONSEN: "onsen",
+          RESTAURANT: "restaurant",
+        };
+
+        return x[placeUpperCased] as IPlaceType;
+      };
+
+      const obj: IPlace = {
+        id: place.id,
+        name: place.name,
+        address: place.address,
+        placeType: test(place.place_type),
+        location: {
+          latitude: place.latitude.toNumber(),
+          longitude: place.longitude.toNumber(),
+        },
+        metadata: {
+          createdAt: place.created_at,
+          updatedAt: place.edited_at,
+        },
+      };
+
+      return obj;
+    });
 
     // Send the response
     res.send({
