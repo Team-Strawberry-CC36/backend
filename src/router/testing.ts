@@ -1,6 +1,6 @@
 import GoogleClient from "@utils/googleClient";
 import { Request, Response, Router } from "express";
-import { PrismaClient, PlaceType } from "@prisma/client";
+import { PrismaClient, PlaceType, Places } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
 enum StatusCode {
@@ -33,6 +33,97 @@ const PLACE_TYPES: {
   restaurant: "RESTAURANT",
   onsen: "ONSEN",
 };
+
+//@ts-ignore
+testingRouter.post("/search", async (req: Request, res: Response) => {
+  try {
+    const { textQuery, category }: SearchRequest = req.body;
+
+    const validationError = validateSearchRequest(textQuery, category);
+    if (validationError) {
+      return res
+        .status(StatusCode.BadBehavior)
+        .send({ message: validationError });
+    }
+
+    const queryResults = await googleClient.textSearch(textQuery!);
+    if (!queryResults || queryResults?.length === 0) {
+      return res.status(404).send({
+        message: queryResults
+          ? "The search found nothing"
+          : "Error while doing the search!",
+        data: [],
+      });
+    }
+
+    const refIds: number[] = [];
+    for (const place of queryResults) {
+      const refId = await processPlace(place, PLACE_TYPES[category!]); // Already valid
+
+      if (refId) {
+        refIds.push(refId);
+        //
+        const MAX_PHOTOS = 1;
+        if (!place.photos) continue;
+        for (let photo of place.photos.slice(0, MAX_PHOTOS)) {
+          const base64_encoded = await googleClient.photoByPlace(photo.name!);
+
+          if (!base64_encoded) continue;
+
+          await prisma.images.create({
+            data: {
+              author_name: "",
+              place_id: refId,
+              file_data: base64_encoded,
+            },
+          });
+        }
+      }
+    }
+
+    const output = await prisma.places.findMany({
+      where: { id: { in: refIds } },
+      include: {
+        etiquettes: true,
+        experiences: true,
+        images: true,
+      },
+    });
+
+    const transformedOutput: IPlace[] = output.map((place) => ({
+      id: place.id,
+      name: place.name,
+      address: place.address,
+      placeType: place.place_type,
+      location: {
+        latitude: place.latitude.toNumber(),
+        longitude: place.longitude.toNumber(),
+      },
+      etiquettes: place.etiquettes || undefined,
+      experiences: place.experiences || undefined,
+      photos: place.photos || undefined,
+      metadata: {
+        createdAt: place.created_at,
+        updatedAt: place.updated_at,
+      },
+    }));
+
+    // Send the response
+    res.send({
+      message: "Successfully retrieved places!",
+      data: transformedOutput,
+    });
+
+    //
+
+    res.send({ message: "Successfully response!", data: output });
+  } catch (e) {
+    console.log(e);
+    res
+      .status(500)
+      .send({ message: "An error occurred while processing your request." });
+  }
+});
 
 // Helper function for validation
 const validateSearchRequest = (textQuery?: string, category?: string) => {
@@ -91,65 +182,5 @@ const processPlace = async (place: any, category: PlaceType) => {
 
   return newPlace.id;
 };
-
-//@ts-ignore
-testingRouter.post("/search", async (req: Request, res: Response) => {
-  try {
-    const { textQuery, category }: SearchRequest = req.body;
-
-    const validationError = validateSearchRequest(textQuery, category);
-    if (validationError) {
-      return res
-        .status(StatusCode.BadBehavior)
-        .send({ message: validationError });
-    }
-
-    const queryResults = await googleClient.textSearch(textQuery!);
-    if (!queryResults || queryResults?.length === 0) {
-      return res.status(404).send({
-        message: queryResults
-          ? "The search found nothing"
-          : "Error while doing the search!",
-        data: [],
-      });
-    }
-
-    const refIds: number[] = [];
-    for (const place of queryResults) {
-      const refId = await processPlace(place, PLACE_TYPES[category!]); // Already valid
-
-      if (refId) {
-        refIds.push(refId);
-        //
-        const MAX_PHOTOS = 1;
-        if (!place.photos) continue;
-        for (let photo of place.photos.slice(0, MAX_PHOTOS)) {
-          const base64_encoded = await googleClient.photoByPlace(photo.name!);
-
-          if (!base64_encoded) continue;
-
-          await prisma.images.create({
-            data: {
-              author_name: "",
-              place_id: refId,
-              file_data: base64_encoded,
-            },
-          });
-        }
-      }
-    }
-
-    const output = await prisma.places.findMany({
-      where: { id: { in: refIds } },
-    });
-
-    res.send({ message: "Successfully response!", data: output });
-  } catch (e) {
-    console.log(e);
-    res
-      .status(500)
-      .send({ message: "An error occurred while processing your request." });
-  }
-});
 
 export default testingRouter;
