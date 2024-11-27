@@ -121,14 +121,10 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
     });
 
     // Send the response
-    res.send({
+    return res.send({
       message: "Successfully retrieved places!",
       data: transformedOutput,
     });
-
-    //
-
-    res.send({ message: "Successfully response!", data: output });
   } catch (e) {
     console.log(e);
     res
