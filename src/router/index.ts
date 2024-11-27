@@ -71,17 +71,17 @@ router.post("/places/:id/experiences", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { user_id, selectedEtiquette, experienceText } = req.body;
-    const newExperience = await prisma.experiences.create({
-      data: {
-        user_id: user_id,
-        place_id: Number(id),
-        experience: experienceText,
-        place_etiquette_id: selectedEtiquette
-          ? Number(selectedEtiquette)
-          : null,
-      },
-    });
-    res.status(201).json(newExperience);
+    // const newExperience = await prisma.experiences.create({
+    //   data: {
+    //     user_id: user_id,
+    //     place_id: Number(id),
+    //     experience: experienceText,
+    //     place_etiquette_id: selectedEtiquette
+    //       ? Number(selectedEtiquette)
+    //       : null,
+    //   },
+    // });
+    res.status(201).json({ message: "Not implemented" });
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
