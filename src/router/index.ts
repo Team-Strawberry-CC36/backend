@@ -70,18 +70,41 @@ router.delete("/places/:id", async (req: Request, res: Response) => {
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { user_id, selectedEtiquette, experienceText } = req.body;
+    const { user_id, dateVisited, dateCreated, experience, etiquettes } =
+      req.body;
+
+    const place = await prisma.places.findUnique({
+      where: { id: Number(id) },
+    });
+    const formattedEtiquettes = etiquettes?.map((etiquette: any) => ({
+      id: etiquette.id,
+      label: etiquette.label,
+    }));
+
     const newExperience = await prisma.experiences.create({
       data: {
-        user_id: user_id,
         place_id: Number(id),
-        experience: experienceText,
-        place_etiquette_id: selectedEtiquette
-          ? Number(selectedEtiquette)
-          : null,
+        user_id,
+        visited_at: new Date(dateVisited),
+        created_at: new Date(dateCreated),
+        experience,
+        etiquettes: formattedEtiquettes,
       },
     });
-    res.status(201).json(newExperience);
+
+    const response = {
+      id: newExperience.id,
+      visited_at: newExperience.visited_at,
+      created_at: newExperience.created_at,
+      experience: newExperience.experience,
+      etiquettes: formattedEtiquettes || [],
+      metadata: {
+        visited_at: newExperience.visited_at,
+        created_at: newExperience.created_at,
+      },
+    };
+
+    res.status(201).json(response);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
@@ -122,5 +145,3 @@ router.delete(
     }
   }
 );
-
-export default router;
