@@ -1,6 +1,8 @@
 // Interface from notion/schema.
 // This information is gonna be used for the client.
 
+import { PlaceType } from "@prisma/client";
+
 interface IPlace {
   id: number;
   name: string;
@@ -54,3 +56,5 @@ interface IEtiquettePerPlace extends IEtiquette {
 interface IEtiquettePerExperience extends IEtiquette {}
 
 type EtiquetteStatus = "allowed" | "not-allowed";
+
+export { PlaceType };
