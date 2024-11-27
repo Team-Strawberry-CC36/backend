@@ -34,64 +34,6 @@ const PLACE_TYPES: {
   onsen: "ONSEN",
 };
 
-// Helper function for validation
-const validateSearchRequest = (textQuery?: string, category?: string) => {
-  if (!textQuery || typeof textQuery !== "string") {
-    return "textQuery must be provided and must be a string!";
-  }
-  if (textQuery.trim().length === 0) {
-    return "textQuery cannot be empty!";
-  }
-  if (!category || !(category in PLACE_TYPES)) {
-    return "category must be a category type!";
-  }
-  return null;
-};
-
-// Helper function to process places
-const processPlace = async (place: any, category: PlaceType) => {
-  const { id, displayName, location, formattedAddress, websiteUri } = place;
-
-  if (!id) return null;
-
-  const existingPlace = await prisma.places.findFirst({
-    where: { google_place_id: id },
-  });
-
-  if (existingPlace) return existingPlace.id;
-
-  // For onsen
-  // "sauna" | "public_bath" | "spa" | "hotel" | "establishment";
-  // For shrine
-  // 'place_of_worship' | 'point_of_interest' | 'establishment' | "establishment"
-  // For restaurant
-  // "restaurant" | "food" | "bar" | "establishment" | "japanese_restaurant"
-
-  if (
-    !displayName?.text ||
-    !formattedAddress ||
-    !location?.latitude ||
-    !location?.longitude
-  ) {
-    return null;
-  }
-
-  const newPlace = await prisma.places.create({
-    data: {
-      name: displayName.text,
-      google_place_id: id,
-      address: formattedAddress,
-      latitude: new Decimal(location.latitude),
-      longitude: new Decimal(location.longitude),
-      place_type: category,
-      website_uri: websiteUri || null,
-      general_info: "",
-    },
-  });
-
-  return newPlace.id;
-};
-
 //@ts-ignore
 testingRouter.post("/search", async (req: Request, res: Response) => {
   try {
@@ -151,5 +93,63 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
       .send({ message: "An error occurred while processing your request." });
   }
 });
+
+// Helper function for validation
+const validateSearchRequest = (textQuery?: string, category?: string) => {
+  if (!textQuery || typeof textQuery !== "string") {
+    return "textQuery must be provided and must be a string!";
+  }
+  if (textQuery.trim().length === 0) {
+    return "textQuery cannot be empty!";
+  }
+  if (!category || !(category in PLACE_TYPES)) {
+    return "category must be a category type!";
+  }
+  return null;
+};
+
+// Helper function to process places
+const processPlace = async (place: any, category: PlaceType) => {
+  const { id, displayName, location, formattedAddress, websiteUri } = place;
+
+  if (!id) return null;
+
+  const existingPlace = await prisma.places.findFirst({
+    where: { google_place_id: id },
+  });
+
+  if (existingPlace) return existingPlace.id;
+
+  // For onsen
+  // "sauna" | "public_bath" | "spa" | "hotel" | "establishment";
+  // For shrine
+  // 'place_of_worship' | 'point_of_interest' | 'establishment' | "establishment"
+  // For restaurant
+  // "restaurant" | "food" | "bar" | "establishment" | "japanese_restaurant"
+
+  if (
+    !displayName?.text ||
+    !formattedAddress ||
+    !location?.latitude ||
+    !location?.longitude
+  ) {
+    return null;
+  }
+
+  const newPlace = await prisma.places.create({
+    data: {
+      name: displayName.text,
+      google_place_id: id,
+      address: formattedAddress,
+      latitude: new Decimal(location.latitude),
+      longitude: new Decimal(location.longitude),
+      place_type: category,
+      website_uri: websiteUri || null,
+      general_info: "",
+    },
+  });
+
+  return newPlace.id;
+};
 
 export default testingRouter;

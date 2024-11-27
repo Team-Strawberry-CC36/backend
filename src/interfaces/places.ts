@@ -1,30 +1,37 @@
 // Interface from notion/schema.
 // This information is gonna be used for the client.
-interface Place {
+
+interface IPlace {
   id: number;
   name: string;
   address: string;
-  generalInfo: "";
   placeType: PlaceType;
   location: {
     latitude: number;
     longitude: number;
   };
-  etiquettes: Etiquette[];
-  experiences: Experience[];
-  photos: Photo[];
+  etiquettes?: IEtiquettePerPlace[];
+  experiences?: IExperience[];
+  photos?: IPhoto[];
   metadata: {
     createdAt: Date;
     updatedAt: Date;
   };
 }
 
-interface Etiquette {
+interface IExperience {
   id: number;
-  label: string;
+  username: string;
+  dateVisited: Date;
+  experience: string;
+  etiquettes: IEtiquettePerExperience[];
+  metadata: {
+    createdAt: Date;
+    updatedAt: Date;
+  };
 }
 
-interface Photo {
+interface IPhoto {
   id: number;
   fileData: string;
   metadata: {
@@ -33,16 +40,17 @@ interface Photo {
   };
 }
 
-interface Experience {
+type PlaceType = "shrine" | "onsen" | "restaurant";
+
+interface IEtiquette {
   id: number;
-  placeId: number;
-  userId: number;
-  experience: string;
-  experienceType: string;
-  metadata: {
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  label: string;
 }
 
-type PlaceType = "shrine" | "onsen" | "restaurant";
+interface IEtiquettePerPlace extends IEtiquette {
+  status: EtiquetteStatus;
+}
+
+interface IEtiquettePerExperience extends IEtiquette {}
+
+type EtiquetteStatus = "allowed" | "not-allowed";
