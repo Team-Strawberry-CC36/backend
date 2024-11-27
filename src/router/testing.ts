@@ -1,6 +1,6 @@
 import GoogleClient from "@utils/googleClient";
 import { Request, Response, Router } from "express";
-import { PrismaClient, PlaceType } from "@prisma/client";
+import { PrismaClient, PlaceType, Places } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
 enum StatusCode {
@@ -83,7 +83,38 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
 
     const output = await prisma.places.findMany({
       where: { id: { in: refIds } },
+      include: {
+        etiquettes: true,
+        experiences: true,
+        images: true,
+      },
     });
+
+    const transformedOutput: IPlace[] = output.map((place) => ({
+      id: place.id,
+      name: place.name,
+      address: place.address,
+      placeType: place.place_type,
+      location: {
+        latitude: place.latitude.toNumber(),
+        longitude: place.longitude.toNumber(),
+      },
+      etiquettes: place.etiquettes || undefined,
+      experiences: place.experiences || undefined,
+      photos: place.photos || undefined,
+      metadata: {
+        createdAt: place.created_at,
+        updatedAt: place.updated_at,
+      },
+    }));
+
+    // Send the response
+    res.send({
+      message: "Successfully retrieved places!",
+      data: transformedOutput,
+    });
+
+    //
 
     res.send({ message: "Successfully response!", data: output });
   } catch (e) {
