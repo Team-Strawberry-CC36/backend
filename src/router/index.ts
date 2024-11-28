@@ -70,18 +70,41 @@ router.delete("/places/:id", async (req: Request, res: Response) => {
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { user_id, selectedEtiquette, experienceText } = req.body;
-    // const newExperience = await prisma.experiences.create({
-    //   data: {
-    //     user_id: user_id,
-    //     place_id: Number(id),
-    //     experience: experienceText,
-    //     place_etiquette_id: selectedEtiquette
-    //       ? Number(selectedEtiquette)
-    //       : null,
-    //   },
-    // });
-    res.status(201).json({ message: "Not implemented" });
+    const { user_id, dateVisited, dateCreated, experience, etiquettes } =
+      req.body;
+
+    const place = await prisma.places.findUnique({
+      where: { id: Number(id) },
+    });
+    const formattedEtiquettes = etiquettes?.map((etiquette: any) => ({
+      id: etiquette.id,
+      label: etiquette.label,
+    }));
+
+    const newExperience = await prisma.experiences.create({
+      data: {
+        place_id: Number(id),
+        user_id,
+        visited_at: new Date(dateVisited),
+        created_at: new Date(dateCreated),
+        experience,
+        etiquettes: formattedEtiquettes,
+      },
+    });
+
+    const response = {
+      id: newExperience.id,
+      visited_at: newExperience.visited_at,
+      created_at: newExperience.created_at,
+      experience: newExperience.experience,
+      etiquettes: formattedEtiquettes || [],
+      metadata: {
+        visited_at: newExperience.visited_at,
+        created_at: newExperience.created_at,
+      },
+    };
+
+    res.status(201).json(response);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
@@ -93,13 +116,38 @@ router.patch(
   "/places/:id/experiences/:expId",
   async (req: Request, res: Response) => {
     try {
-      const { expID } = req.params;
-      const updateData = req.body;
+      const { expId } = req.params;
+      const { user_id, visited_at, created_at, experience, etiquettes } =
+        req.body;
+
+      const formattedEtiquettes = etiquettes?.map((etiquette: any) => ({
+        id: etiquette.id,
+        label: etiquette.label,
+      }));
+
       const updatedExperience = await prisma.experiences.update({
-        where: { id: Number(expID) },
-        data: updateData,
+        where: { id: Number(expId) },
+        data: {
+          user_id,
+          visited_at: new Date(visited_at),
+          created_at: new Date(created_at),
+          experience,
+          etiquettes: formattedEtiquettes,
+        },
       });
-      res.json(updatedExperience);
+
+      const response = {
+        id: updatedExperience.id,
+        user_id: updatedExperience.user_id,
+        visited_at: new Date(updatedExperience.visited_at),
+        experience: updatedExperience.experience,
+        etiquettes: formattedEtiquettes || [],
+        metadata: {
+          created_at: updatedExperience.created_at,
+        },
+      };
+
+      res.status(200).json(response);
     } catch (error) {
       console.error(error);
       res.status(400).json({ error });
@@ -122,5 +170,3 @@ router.delete(
     }
   }
 );
-
-export default router;
