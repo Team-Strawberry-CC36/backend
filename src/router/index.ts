@@ -116,13 +116,38 @@ router.patch(
   "/places/:id/experiences/:expId",
   async (req: Request, res: Response) => {
     try {
-      const { expID } = req.params;
-      const updateData = req.body;
+      const { expId } = req.params;
+      const { user_id, visited_at, created_at, experience, etiquettes } =
+        req.body;
+
+      const formattedEtiquettes = etiquettes?.map((etiquette: any) => ({
+        id: etiquette.id,
+        label: etiquette.label,
+      }));
+
       const updatedExperience = await prisma.experiences.update({
-        where: { id: Number(expID) },
-        data: updateData,
+        where: { id: Number(expId) },
+        data: {
+          user_id,
+          visited_at: new Date(visited_at),
+          created_at: new Date(created_at),
+          experience,
+          etiquettes: formattedEtiquettes,
+        },
       });
-      res.json(updatedExperience);
+
+      const response = {
+        id: updatedExperience.id,
+        user_id: updatedExperience.user_id,
+        visited_at: new Date(updatedExperience.visited_at),
+        experience: updatedExperience.experience,
+        etiquettes: formattedEtiquettes || [],
+        metadata: {
+          created_at: updatedExperience.created_at,
+        },
+      };
+
+      res.status(200).json(response);
     } catch (error) {
       console.error(error);
       res.status(400).json({ error });
