@@ -14,6 +14,17 @@ model Users_accounts {
   created_at   DateTime      @default(now())
   // Relationships
   experiences  Experiences[]
+  votes Votes[]
+}
+
+model Votes {
+  id Int @id @default(autoincrement())
+  user_id Int
+  experience_id Int
+  status VoteStatus
+  // Relationships
+  users_accounts Users_accounts @relation(fields: [user_id], references: [id])
+  experiences Experiences @relation(fields: [experience_id], references: [id])
 }
 
 model Experiences {
@@ -27,6 +38,7 @@ model Experiences {
   edited_at       DateTime @default(now())
   // Relationships
   etiquettes Etiquette_per_experiences[]
+  votes Votes[]
   users_accounts Users_accounts @relation(fields: [user_id], references: [id])
   place Places @relation(fields: [place_id], references: [id])
 }
@@ -73,6 +85,7 @@ model Etiquette_per_experiences {
   id  Int @id @default(autoincrement())
   experience_id Int
   etiquette_id Int
+  status EtiquetteStatus
   // Relationships
   experience Experiences @relation(fields: [experience_id], references: [id])
   etiquette Etiquette @relation(fields: [etiquette_id], references: [id])
@@ -98,4 +111,10 @@ enum PlaceType {
 enum EtiquetteStatus {
   ALLOWED
   NOT_ALLOWED
+  NEUTRAL
+}
+
+enum VoteStatus {
+  UP
+  DOWN
 }
