@@ -38,7 +38,7 @@ const PLACE_TYPES: {
 //@ts-ignore
 testingRouter.post("/search", async (req: Request, res: Response) => {
   try {
-    const { textQuery, category }: SearchRequest = req.body;
+    const { textQuery, category }: SearchRequest = req.body.body;
 
     const validationError = validateSearchRequest(textQuery, category);
     if (validationError) {
@@ -66,19 +66,20 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
         //
         const MAX_PHOTOS = 1;
         if (!place.photos) continue;
-        for (let photo of place.photos.slice(0, MAX_PHOTOS)) {
-          const base64_encoded = await googleClient.photoByPlace(photo.name!);
+        // --- COMMENTED FOR REDUCE REQUEST TIME
+        // for (let photo of place.photos.slice(0, MAX_PHOTOS)) {
+        //   const base64_encoded = await googleClient.photoByPlace(photo.name!);
 
-          if (!base64_encoded) continue;
+        //   if (!base64_encoded) continue;
 
-          await prisma.images.create({
-            data: {
-              author_name: "",
-              place_id: refId,
-              file_data: base64_encoded,
-            },
-          });
-        }
+        //   await prisma.images.create({
+        //     data: {
+        //       author_name: "",
+        //       place_id: refId,
+        //       file_data: base64_encoded,
+        //     },
+        //   });
+        // }
       }
     }
 
@@ -87,7 +88,7 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
       include: {
         etiquettes: true,
         experiences: true,
-        images: true,
+        // images: true,
       },
     });
 
