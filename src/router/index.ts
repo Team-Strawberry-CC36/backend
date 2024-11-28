@@ -68,19 +68,20 @@ router.delete("/places/:id", async (req: Request, res: Response) => {
 
 //Retrieve all experiences related to a specific place
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
+  console.log(req.body);
   try {
     const { id } = req.params;
     const { user_id, selectedEtiquette, experienceText } = req.body;
-    // const newExperience = await prisma.experiences.create({
-    //   data: {
-    //     user_id: user_id,
-    //     place_id: Number(id),
-    //     experience: experienceText,
-    //     place_etiquette_id: selectedEtiquette
-    //       ? Number(selectedEtiquette)
-    //       : null,
-    //   },
-    // });
+    const newExperience = await prisma.experiences.create({
+      data: {
+        user_id: user_id,
+        place_id: Number(id),
+        experience: experienceText,
+        // place_etiquette_id: selectedEtiquette
+        //   ? Number(selectedEtiquette)
+        //   : null,
+      },
+    });
     res.status(201).json({ message: "Not implemented" });
   } catch (error) {
     console.error(error);
@@ -122,5 +123,14 @@ router.delete(
     }
   }
 );
+
+// Voting endpoint
+router.post(
+  "/vote",
+  (req: Request, res: Response) => {
+    console.log(req.body);
+    res.status(200).json({"message": "success"})
+  }
+)
 
 export default router;

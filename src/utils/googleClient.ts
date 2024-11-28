@@ -36,6 +36,7 @@ export default class GoogleClient {
   }
 
   async textSearch(textQuery: string, location?: any) {
+
     // Properties to query
     const fields = [
       "types",
@@ -50,6 +51,7 @@ export default class GoogleClient {
     ];
 
     let formattedFields = fields.map((field) => "places." + field).join(",");
+    console.log(formattedFields);
 
     const query = await this.placesClient.searchText(
       {
@@ -67,12 +69,12 @@ export default class GoogleClient {
       {
         otherArgs: {
           headers: {
-            "X-Goog-FieldMask": formattedFields,
+            "X-Goog-FieldMask": formattedFields
           },
         },
       }
     );
-
+    console.log(query[0].places?.length);
     return query[0].places;
   }
 
