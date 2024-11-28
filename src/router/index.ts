@@ -85,6 +85,13 @@ router.delete("/experiences/:expId/votes/:voteId");
 // ---
 
 //Retrieve all experiences related to a specific place
+
+// ERRORS IN HERE
+// -- TYPESCRIPT
+//  This will fail because some variables are "any".
+// ex: formattedEtiquettes
+// The same with the routes below.
+//
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
