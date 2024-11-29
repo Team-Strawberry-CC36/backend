@@ -1,5 +1,5 @@
 import express, { Request, Response, Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Etiquette_per_experiences, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const router: Router = express.Router();
@@ -66,7 +66,32 @@ router.delete("/places/:id", async (req: Request, res: Response) => {
 
 // --! Experiences endpoints
 
+// -- new endpoints
+// @ai
+// We need to get experiences from a place.
+router.get("/places/:placeId/experiences");
+
+// Get all votes from an experience
+router.get("/experiences/:id/votes");
+
+// Post a new vote from an user
+router.post("/experiences/:id/votes");
+
+// Change status of a vote
+router.post("/experiences/:expId/votes/:voteId");
+
+// Delete one specify vote
+router.delete("/experiences/:expId/votes/:voteId");
+// ---
+
 //Retrieve all experiences related to a specific place
+
+// ERRORS IN HERE
+// -- TYPESCRIPT
+//  This will fail because some variables are "any".
+// ex: formattedEtiquettes
+// The same with the routes below.
+//
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
