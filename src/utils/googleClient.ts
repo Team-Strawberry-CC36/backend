@@ -1,6 +1,6 @@
 import { v1 } from "@googlemaps/places";
 import { GoogleAuth } from "google-auth-library";
-import { loadConfig } from "tsconfig-paths";
+// import { loadConfig } from "tsconfig-paths";
 
 // Format a string "places/:string/photos/:refImg" to get refImg
 function formatPath(input: string) {
@@ -25,7 +25,7 @@ export default class GoogleClient {
   constructor(apiKey: string | undefined) {
     // Validation in the constructor.
     if (typeof apiKey !== "string") {
-      throw new Error("Google Api kwey must be a value");
+      throw new Error("Google Api key must be a value");
     }
     this.apiKey = apiKey;
 
