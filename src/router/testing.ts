@@ -1,6 +1,6 @@
 import GoogleClient from "@utils/googleClient";
 import { Request, Response, Router } from "express";
-import { PrismaClient, PlaceType, Places } from "@prisma/client";
+import { PrismaClient, PlaceType } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import { IPlace, IPlaceType } from "src/interfaces/places";
 

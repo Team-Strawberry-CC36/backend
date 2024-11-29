@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
-    "start": "node dist/server.js",
+    "start": "tsx src/server.ts",
     "dev": "nodemon -r tsconfig-paths/register src/server.ts",
     "seed": "ts-node prisma/seed.ts"
   },
@@ -23,7 +23,8 @@
     "google-auth-library": "^9.15.0",
     "morgan": "^1.10.0",
     "prisma": "^5.22.0",
-    "tsconfig-paths": "^4.2.0"
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.19.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
