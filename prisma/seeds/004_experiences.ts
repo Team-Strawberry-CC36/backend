@@ -21,7 +21,7 @@ async function main() {
   const etiquette = await prisma.etiquette.create({
     data: {
       place_id: 1,
-      label: "No Tatoo",
+      label: "tattoo",
       place_type: PlaceType.ONSEN,
     },
   });
