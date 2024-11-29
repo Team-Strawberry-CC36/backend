@@ -1,9 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { Places, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export default class GeneralModel {
-  static async getInitialData(): Promise<Place | null> {
+  static async getInitialData(): Promise<Places | null> {
     return null;
   }
 
