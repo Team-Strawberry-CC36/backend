@@ -1,5 +1,5 @@
 import express, { Request, Response, Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Etiquette_per_experiences, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const router: Router = express.Router();
@@ -66,11 +66,38 @@ router.delete("/places/:id", async (req: Request, res: Response) => {
 
 // --! Experiences endpoints
 
+// -- new endpoints
+// @ai
+// We need to get experiences from a place.
+router.get("/places/:placeId/experiences");
+
+// Get all votes from an experience
+router.get("/experiences/:id/votes");
+
+// Post a new vote from an user
+router.post("/experiences/:id/votes");
+
+// Change status of a vote
+router.post("/experiences/:expId/votes/:voteId");
+
+// Delete one specify vote
+router.delete("/experiences/:expId/votes/:voteId");
+// ---
+
 //Retrieve all experiences related to a specific place
+
+// ERRORS IN HERE
+// -- TYPESCRIPT
+//  This will fail because some variables are "any".
+// ex: formattedEtiquettes
+// The same with the routes below.
+//
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
   console.log(req.body);
   try {
     const { id } = req.params;
+    /**
+    Daniel changes!
     const { user_id, selectedEtiquette, experienceText } = req.body;
     const newExperience = await prisma.experiences.create({
       data: {
@@ -83,6 +110,42 @@ router.post("/places/:id/experiences", async (req: Request, res: Response) => {
       },
     });
     res.status(201).json({ message: "Not implemented" });
+    */
+    const { user_id, dateVisited, dateCreated, experience, etiquettes } =
+      req.body;
+
+    const place = await prisma.places.findUnique({
+      where: { id: Number(id) },
+    });
+    const formattedEtiquettes = etiquettes?.map((etiquette: any) => ({
+      id: etiquette.id,
+      label: etiquette.label,
+    }));
+
+    const newExperience = await prisma.experiences.create({
+      data: {
+        place_id: Number(id),
+        user_id,
+        visited_at: new Date(dateVisited),
+        created_at: new Date(dateCreated),
+        experience,
+        etiquettes: formattedEtiquettes,
+      },
+    });
+
+    const response = {
+      id: newExperience.id,
+      visited_at: newExperience.visited_at,
+      created_at: newExperience.created_at,
+      experience: newExperience.experience,
+      etiquettes: formattedEtiquettes || [],
+      metadata: {
+        visited_at: newExperience.visited_at,
+        created_at: newExperience.created_at,
+      },
+    };
+
+    res.status(201).json(response);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
@@ -94,13 +157,38 @@ router.patch(
   "/places/:id/experiences/:expId",
   async (req: Request, res: Response) => {
     try {
-      const { expID } = req.params;
-      const updateData = req.body;
+      const { expId } = req.params;
+      const { user_id, visited_at, created_at, experience, etiquettes } =
+        req.body;
+
+      const formattedEtiquettes = etiquettes?.map((etiquette: any) => ({
+        id: etiquette.id,
+        label: etiquette.label,
+      }));
+
       const updatedExperience = await prisma.experiences.update({
-        where: { id: Number(expID) },
-        data: updateData,
+        where: { id: Number(expId) },
+        data: {
+          user_id,
+          visited_at: new Date(visited_at),
+          created_at: new Date(created_at),
+          experience,
+          etiquettes: formattedEtiquettes,
+        },
       });
-      res.json(updatedExperience);
+
+      const response = {
+        id: updatedExperience.id,
+        user_id: updatedExperience.user_id,
+        visited_at: new Date(updatedExperience.visited_at),
+        experience: updatedExperience.experience,
+        etiquettes: formattedEtiquettes || [],
+        metadata: {
+          created_at: updatedExperience.created_at,
+        },
+      };
+
+      res.status(200).json(response);
     } catch (error) {
       console.error(error);
       res.status(400).json({ error });

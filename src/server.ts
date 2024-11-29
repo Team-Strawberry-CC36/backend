@@ -5,7 +5,7 @@ import cors, { CorsOptions } from "cors";
 // Environment variables
 import "dotenv/config";
 
-import router from "./router";
+import router from "@router/index";
 import testingRouter from "@router/testing";
 import moreTestingRouter from "@router/moreTesting";
 
