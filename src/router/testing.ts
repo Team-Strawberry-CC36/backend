@@ -37,6 +37,7 @@ const PLACE_TYPES: {
 
 //@ts-ignore
 testingRouter.post("/search", async (req: Request, res: Response) => {
+  console.log("request is:", req.body);
   try {
     const { textQuery, category }: SearchRequest = req.body.body;
 
@@ -47,7 +48,8 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
         .send({ message: validationError });
     }
 
-    const queryResults = await googleClient.textSearch(textQuery!);
+    const enhancedTextQuery = category + " " + textQuery;
+    const queryResults = await googleClient.textSearch(enhancedTextQuery!);
     if (!queryResults || queryResults?.length === 0) {
       return res.status(404).send({
         message: queryResults
@@ -56,6 +58,7 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
         data: [],
       });
     }
+    console.log(queryResults);
 
     const refIds: number[] = [];
     for (const place of queryResults) {

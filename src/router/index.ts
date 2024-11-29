@@ -93,8 +93,24 @@ router.delete("/experiences/:expId/votes/:voteId");
 // The same with the routes below.
 //
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
+  console.log(req.body);
   try {
     const { id } = req.params;
+    /**
+    Daniel changes!
+    const { user_id, selectedEtiquette, experienceText } = req.body;
+    const newExperience = await prisma.experiences.create({
+      data: {
+        user_id: user_id,
+        place_id: Number(id),
+        experience: experienceText,
+        // place_etiquette_id: selectedEtiquette
+        //   ? Number(selectedEtiquette)
+        //   : null,
+      },
+    });
+    res.status(201).json({ message: "Not implemented" });
+    */
     const { user_id, dateVisited, dateCreated, experience, etiquettes } =
       req.body;
 
@@ -195,5 +211,14 @@ router.delete(
     }
   }
 );
+
+// Voting endpoint
+router.post(
+  "/vote",
+  (req: Request, res: Response) => {
+    console.log(req.body);
+    res.status(200).json({"message": "success"})
+  }
+)
 
 export default router;
