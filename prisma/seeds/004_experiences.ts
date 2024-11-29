@@ -17,49 +17,39 @@ async function main() {
     },
   });
 
-  console.log(place);
-
   // Seed Etiquette
   const etiquette = await prisma.etiquette.create({
     data: {
-      place_id: place.id,
+      place_id: 1,
       label: "No Tatoo",
       place_type: PlaceType.ONSEN,
     },
   });
 
-  console.log(etiquette);
-
   // Seed Users
   // const user = await prisma.users_accounts.create({
   //   data: {
-  //     username: 'Ai',
+  //     username: "Test",
   //   },
   // });
-
-  // console.log('User created:', user);
 
   // Seed Experiences
   const experience = await prisma.experiences.create({
     data: {
-      place_id: place.id,
-      user_id: id,
+      place_id: 1,
+      user_id: 1,
       experience: "A calming and beautiful place to visit.",
     },
   });
 
-  console.log(experience);
-
   // Seed Etiquette_per_experiences
   const etiquettePerExperience = await prisma.etiquette_per_experiences.create({
     data: {
-      experience_id: experience.id,
-      etiquette_id: etiquette.id,
+      experience_id: 1,
+      etiquette_id: 1,
       status: EtiquetteStatus.ALLOWED,
     },
   });
-
-  console.log(etiquettePerExperience);
 }
 
 main()
