@@ -1,6 +1,10 @@
 import express, { Request, Response, Router } from "express";
 import { Etiquette_per_experiences, PrismaClient } from "@prisma/client";
 
+// To protect routes with session verification
+import { verifySessionCookie } from '../auth/controllers/authController';
+// add verifySessionCookie as middleware to routes that need protecting
+
 const prisma = new PrismaClient();
 const router: Router = express.Router();
 
