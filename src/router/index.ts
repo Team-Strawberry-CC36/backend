@@ -72,9 +72,7 @@ router.delete("/places/:id", async (req: Request, res: Response) => {
 
 // --! Experiences endpoints
 
-// -- new endpoints
-
-// We need to get experiences from a place.
+// Get experiences from a place.
 router.get(
   "/places/:placeId/experiences",
   async (req: Request, res: Response) => {
@@ -144,8 +142,22 @@ router.get("/experiences/:id/votes", async (req: Request, res: Response) => {
 // Post a new vote from an user
 router.post("/experiences/:id/votes", async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
+    const parsedId = parseInt(id, 10);
+    const { user_id, status } = req.body;
+
+    const newVote = await prisma.votes.create({
+      data: {
+        experience_id: parsedId,
+        user_id,
+        status,
+      },
+    });
+
+    res.status(200).json(newVote);
   } catch (error) {
     console.error(error);
+    res.status(400).json({ error });
   }
 });
 
@@ -154,8 +166,21 @@ router.post(
   "/experiences/:expId/votes/:voteId",
   async (req: Request, res: Response) => {
     try {
+      const { expId, voteId } = req.params;
+      const parsedExpId = parseInt(expId, 10);
+      const parsedVoteId = parseInt(voteId, 10);
+
+      const { status } = req.body;
+
+      const updatedVote = await prisma.votes.update({
+        where: { id: parsedVoteId },
+        data: { status },
+      });
+
+      res.status(200).json(updatedVote);
     } catch (error) {
       console.error(error);
+      res.status(400).json({ error });
     }
   }
 );
@@ -178,7 +203,6 @@ router.delete(
 // ---
 
 //Retrieve all experiences related to a specific place
-
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
   console.log(req.body);
   try {
