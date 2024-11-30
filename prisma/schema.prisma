@@ -8,97 +8,95 @@ datasource db {
 }
 
 model Users_accounts {
-  id Int @id @default(autoincrement())
-  username    String        @db.VarChar(255)
+  id           String         @id @db.VarChar(255)
+  username     String         @db.VarChar(255)
   // Time values
-  created_at   DateTime      @default(now())
+  created_at   DateTime       @default(now())
   // Relationships
   experiences  Experiences[]
-  votes Votes[]
-}
-
-model Votes {
-  id Int @id @default(autoincrement())
-  user_id Int
-  experience_id Int
-  status VoteStatus
-  // Relationships
-  users_accounts Users_accounts @relation(fields: [user_id], references: [id])
-  experiences Experiences @relation(fields: [experience_id], references: [id])
-}
-
-model Experiences {
-  id              Int      @id @default(autoincrement())
-  place_id        Int
-  user_id         Int
-  experience      String   @db.Text
-  // Time values
-  visited_at      DateTime @default(now())
-  created_at      DateTime @default(now())
-  edited_at       DateTime @default(now())
-  // Relationships
-  etiquettes Etiquette_per_experiences[]
-  votes Votes[]
-  users_accounts Users_accounts @relation(fields: [user_id], references: [id])
-  place Places @relation(fields: [place_id], references: [id])
+  votes        Votes[]
+  Helpfullness Helpfullness[]
 }
 
 model Places {
-  id           Int      @id @default(autoincrement())
-  place_type   PlaceType
-  name         String   @db.VarChar(255)
-  address      String   @db.VarChar(255)
-  latitude     Decimal @db.Decimal(9, 6)
-  longitude    Decimal @db.Decimal(9, 6)
-  google_place_id String @unique @db.VarChar(255)
-  website_uri String? @db.Text
-  general_info String   @db.Text
+  id              Int                     @id @default(autoincrement())
+  place_type      PlaceType
+  google_place_id String                  @unique @db.VarChar(255)
   // Time values
-  created_at   DateTime @default(now())
-  edited_at    DateTime @default(now())
+  created_at      DateTime                @default(now())
+  edited_at       DateTime                @default(now())
   // Experiences
-  experiences Experiences[]
-  images Images[]
-  etiquettes Etiquettes_per_places[]
-}
-
-model Images {
-  id Int @id @default(autoincrement())
-  place_id Int
-  author_name String @db.VarChar()
-  file_data String @db.Text
-  // Relationships
-  place Places @relation(fields: [place_id], references: [id], onDelete: Cascade)
-}
-
-model Etiquettes_per_places {
-  id        Int     @id @default(autoincrement())
-  place_id  Int
-  etiquette_id  Int
-  status EtiquetteStatus
-  // Relationships
-  etiquette Etiquette @relation(fields: [etiquette_id], references: [id])
-  places Places @relation(fields: [place_id], references: [id])
-}
-
-model Etiquette_per_experiences {
-  id  Int @id @default(autoincrement())
-  experience_id Int
-  etiquette_id Int
-  status EtiquetteStatus
-  // Relationships
-  experience Experiences @relation(fields: [experience_id], references: [id])
-  etiquette Etiquette @relation(fields: [etiquette_id], references: [id])
+  experiences     Experiences[]
+  etiquettes      Etiquettes_per_places[]
 }
 
 model Etiquette {
-  id    Int    @id @default(autoincrement())
-  place_id Int
-  label String @db.VarChar()
-  place_type PlaceType
+  id                     Int                         @id @default(autoincrement())
+  label                  String                      @db.VarChar(255)
+  place_type             PlaceType
   // Relationships
-  EtiquettePerPlaces Etiquettes_per_places[]
+  EtiquettePerPlaces     Etiquettes_per_places[]
   EtiquettePerExperience Etiquette_per_experiences[]
+}
+
+model Experiences {
+  id             Int                         @id @default(autoincrement())
+  place_id       Int
+  user_id        String
+  experience     String                      @db.Text
+  // Time values
+  visited_at     DateTime                    @default(now())
+  created_at     DateTime                    @default(now())
+  edited_at      DateTime                    @default(now())
+  // Relationships
+  etiquettes     Etiquette_per_experiences[]
+  votes          Votes[]
+  Helpfullness   Helpfullness[]
+  //
+  users_accounts Users_accounts              @relation(fields: [user_id], references: [id])
+  place          Places                      @relation(fields: [place_id], references: [id])
+}
+
+model Etiquettes_per_places {
+  id           Int             @id @default(autoincrement())
+  place_id     Int
+  etiquette_id Int
+  status       EtiquetteStatus
+  // Relationships
+  votes        Votes[]
+  etiquette    Etiquette       @relation(fields: [etiquette_id], references: [id])
+  places       Places          @relation(fields: [place_id], references: [id])
+}
+
+model Helpfullness {
+  id            Int               @id @default(autoincrement())
+  user_id       String
+  experience_id Int
+  status        HelpfullnessLevel
+  // Relationships
+  users_account Users_accounts    @relation(fields: [user_id], references: [id])
+  experienec    Experiences       @relation(fields: [experience_id], references: [id])
+}
+
+model Votes {
+  id                 Int                   @id @default(autoincrement())
+  user_id            String
+  place_etiquette_id Int
+  status             EtiquetteStatus
+  // Relationships
+  users_accounts     Users_accounts        @relation(fields: [user_id], references: [id])
+  place_etiquette    Etiquettes_per_places @relation(fields: [place_etiquette_id], references: [id])
+  Experiences        Experiences?          @relation(fields: [experiencesId], references: [id])
+  experiencesId      Int?
+}
+
+model Etiquette_per_experiences {
+  id            Int         @id @default(autoincrement())
+  experience_id Int
+  etiquette_id  Int
+  // Relationships
+  experience    Experiences @relation(fields: [experience_id], references: [id])
+  etiquette     Etiquette   @relation(fields: [etiquette_id], references: [id])
 }
 
 // Enums
@@ -114,7 +112,7 @@ enum EtiquetteStatus {
   NEUTRAL
 }
 
-enum VoteStatus {
+enum HelpfullnessLevel {
   UP
   DOWN
 }
