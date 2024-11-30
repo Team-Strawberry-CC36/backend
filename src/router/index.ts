@@ -118,8 +118,26 @@ router.get(
 // Get all votes from an experience
 router.get("/experiences/:id/votes", async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
+    const parsedId = parseInt(id, 10);
+
+    const votes = await prisma.votes.findMany({
+      where: { experience_id: parsedId },
+      include: {
+        users_accounts: true,
+      },
+    });
+
+    const response = votes.map((vote) => ({
+      id: vote.id,
+      user: vote.users_accounts.username,
+      status: vote.status,
+    }));
+
+    res.status(200).json(response);
   } catch (error) {
     console.error(error);
+    res.status(500).json({ error });
   }
 });
 
