@@ -59,6 +59,8 @@ moreTestingRouter.post('/places/:id/votes', (req: Request, res: Response) => {
     // }
     // type EtiquetteStatus = 'allowed' | 'not-allowed' | undefined;
 
+    // The numberOfVotesForAllowed and numberOfVotesForNotAllowed will need updating as well.
+
     res.status(200).json({ "message": "success" });
 });
 
@@ -88,6 +90,8 @@ moreTestingRouter.patch('/places/:id/votes', (req: Request, res: Response) => {
     //     vote: EtiquetteStatus;
     // }
     // type EtiquetteStatus = 'allowed' | 'not-allowed' | undefined;
+
+    // The numberOfVotesForAllowed and numberOfVotesForNotAllowed will need updating as well.
     res.status(200).json({ "message": "success" });
 })
 
