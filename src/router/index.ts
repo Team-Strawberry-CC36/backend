@@ -2,10 +2,8 @@ import express, { Request, Response, Router } from "express";
 import {
   Etiquette,
   Etiquette_per_experiences,
-  EtiquetteStatus,
   PrismaClient,
 } from "@prisma/client";
-import e from "express";
 
 const prisma = new PrismaClient();
 const router: Router = express.Router();
@@ -204,7 +202,6 @@ router.delete(
 
 //Retrieve all experiences related to a specific place
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
-  console.log(req.body);
   try {
     const { id } = req.params;
     const { user_id, dateVisited, dateCreated, experience, etiquettes } =
