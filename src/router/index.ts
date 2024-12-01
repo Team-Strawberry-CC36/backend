@@ -14,7 +14,6 @@ router.get("/places", async (req: Request, res: Response) => {
     const places = await prisma.places.findMany({
       include: {
         experiences: true,
-        images: true,
       },
     });
     res.json(places);
@@ -83,7 +82,11 @@ router.get(
         include: {
           etiquettes: {
             include: {
-              etiquette: true,
+              Place_etiquettes: {
+                include: {
+                  etiquette: true,
+                },
+              },
             },
           },
         },
@@ -98,8 +101,8 @@ router.get(
           editedAt: experience.edited_at,
         },
         etiquettes: experience.etiquettes.map((e) => ({
-          id: e.etiquette.id,
-          label: e.etiquette.label,
+          id: e.Place_etiquettes.id,
+          label: e.Place_etiquettes.etiquette.label,
         })),
       }));
 
@@ -307,10 +310,98 @@ router.delete(
   }
 );
 
-// Voting endpoint
-router.post("/vote", (req: Request, res: Response) => {
-  console.log(req.body);
-  res.status(200).json({ message: "success" });
+// --! Voting endpoint
+
+// Retrieve votes for a specific place
+router.get("/places/:id/votes", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const placeId = parseInt(id, 10);
+    const etiquettes = await prisma.place_etiquettes.findMany({
+      where: { place_id: placeId },
+      include: {
+        votes: true,
+        etiquette: true,
+      },
+    });
+
+    const response = etiquettes.map((etiquette) => {
+      const voteCounts = etiquette.votes.reduce(
+        (acc: Record<"allowed" | "not_allowed" | "neutral", number>, vote) => {
+          const status = vote.status.toLowerCase() as
+            | "allowed"
+            | "not_allowed"
+            | "neutral";
+          acc[status] += 1;
+          return acc;
+        },
+        { allowed: 0, not_allowed: 0, neutral: 0 }
+      );
+
+      return {
+        etiquetteId: etiquette.etiquette_id,
+        etiquetteType: etiquette.etiquette.label,
+        numberOfVotesForAllowed: voteCounts.allowed,
+        numberOfVotesForNotAllowed: voteCounts.not_allowed,
+        numberOfVotesForNeutral: voteCounts.neutral,
+      };
+    });
+
+    res.status(200).json({
+      message: "Votes retrieved successfully.",
+      data: response,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
 });
+
+// Insert votes for a place
+router.post("/places/:id/votes", async (req: Request, res: Response) => {
+  const userId = req.body.user_id;
+  const votes = req.body.votes;
+
+  try {
+    const processedVotes = votes.map((vote: { id: number; vote: string }) => ({
+      place_etiquette_id: vote.id,
+      user_id: userId,
+      status: vote.vote,
+    }));
+
+    const result = await prisma.votes.createMany({
+      data: processedVotes,
+      skipDuplicates: true,
+    });
+
+    res.status(201).json({
+      data: result,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+});
+
+// Update a specific vote for a place
+router.patch(
+  "/places/:id/votes/:voteId",
+  async (req: Request, res: Response) => {
+    const { voteId } = req.params;
+    const { status } = req.body;
+
+    try {
+      const updatedVote = await prisma.votes.update({
+        where: { id: parseInt(voteId, 10) },
+        data: { status },
+      });
+
+      res.status(200).json({ data: updatedVote });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error });
+    }
+  }
+);
 
 export default router;
