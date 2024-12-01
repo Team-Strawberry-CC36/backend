@@ -64,11 +64,16 @@ export const authenticateSessionWithFirebase = async (req: Request, res: Respons
     }
 };
 
+interface CustomRequest extends Request {
+    user?: firebaseAdmin.auth.DecodedIdToken;
+}
+
 export const verifySessionCookie = async (req: Request, res: Response, next: NextFunction) => {
     const sessionCookie = req.cookies.session || "";
     console.log("Verifying session cookie...");
     try {
         const decodedClaims = await firebaseAdmin.auth().verifySessionCookie(sessionCookie, true);
+        (req as CustomRequest).user = decodedClaims;
         //req.user = decodedClaims as firebaseAdmin.auth.DecodedIdToken;
         next();
     } catch (error) {
@@ -81,10 +86,11 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
     try {
         console.log("Clearing cookie");
         res.clearCookie('session');
-        // if (!req.user || !req.user.sub) {
-        //     throw new Error("User is not authenticated or 'sub' is missing.");
-        // }
-        // await firebaseAdmin.auth().revokeRefreshTokens(req.user.sub);
+        const customReq = req as CustomRequest;
+        if (!customReq.user || !customReq.user.sub) {
+            throw new Error("User is not authenticated or 'sub' is missing.");
+        }
+        await firebaseAdmin.auth().revokeRefreshTokens(customReq.user.sub);
         next();
     } catch (error) {
         res.status(401).json({ message: "unauthorized" });
