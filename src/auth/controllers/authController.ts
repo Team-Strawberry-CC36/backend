@@ -4,9 +4,6 @@ import firebaseAdmin from '../../utils/firebase';
 import AuthorizeUsers from '../models/authModel';
 import { IUser } from 'src/interfaces/user';
 
-const testRequest: Request = {} as any;
-console.log(testRequest.user);
-
 export const insertNewUser = (req: Request, res: Response, next: NextFunction) => {
     // Prepare user input data for the AuthorizeUsers model.
 
@@ -72,7 +69,7 @@ export const verifySessionCookie = async (req: Request, res: Response, next: Nex
     console.log("Verifying session cookie...");
     try {
         const decodedClaims = await firebaseAdmin.auth().verifySessionCookie(sessionCookie, true);
-        req.user = decodedClaims as firebaseAdmin.auth.DecodedIdToken;
+        //req.user = decodedClaims as firebaseAdmin.auth.DecodedIdToken;
         next();
     } catch (error) {
         res.clearCookie("session"); // Clear cookie if verification fails
@@ -84,10 +81,10 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
     try {
         console.log("Clearing cookie");
         res.clearCookie('session');
-        if (!req.user || !req.user.sub) {
-            throw new Error("User is not authenticated or 'sub' is missing.");
-        }
-        await firebaseAdmin.auth().revokeRefreshTokens(req.user.sub);
+        // if (!req.user || !req.user.sub) {
+        //     throw new Error("User is not authenticated or 'sub' is missing.");
+        // }
+        // await firebaseAdmin.auth().revokeRefreshTokens(req.user.sub);
         next();
     } catch (error) {
         res.status(401).json({ message: "unauthorized" });
