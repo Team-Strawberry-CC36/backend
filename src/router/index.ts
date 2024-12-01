@@ -307,10 +307,99 @@ router.delete(
   }
 );
 
-// Voting endpoint
-router.post("/vote", (req: Request, res: Response) => {
-  console.log(req.body);
-  res.status(200).json({ message: "success" });
+// --! Voting endpoint
+
+// Retrieve votes for a specific place
+router.get("/places/:id/votes", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const placeId = parseInt(id, 10);
+    const etiquettes = await prisma.place_etiquettes.findMany({
+      where: { place_id: placeId },
+      include: {
+        votes: true,
+        etiquette: true,
+      },
+    });
+
+    const response = etiquettes.map((etiquette) => {
+      const voteCounts = etiquette.votes.reduce(
+        (acc, vote) => {
+          const status = vote.status.toLowerCase();
+          acc[status] += 1;
+          return acc;
+        },
+        { allowed: 0, not_allowed: 0, neutral: 0 }
+      );
+
+      return {
+        etiquetteId: etiquette.etiquette_id,
+        etiquetteType: etiquette.etiquette.label,
+        numberOfVotesForAllowed: voteCounts.allowed,
+        numberOfVotesForNotAllowed: voteCounts.not_allowed,
+        numberOfVotesForNeutral: voteCounts.neutral,
+      };
+    });
+
+    res.status(200).json({
+      message: "Votes retrieved successfully.",
+      data: response,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
 });
+
+// Insert votes for a place
+router.post("/places/:id/votes", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { votes, userId } = req.body;
+
+  try {
+    const placeId = parseInt(id, 10);
+    const processedVotes = votes.map((vote) => ({
+      place_etiquette_id: vote.etiquetteId,
+      user_id: userId,
+      status: vote.vote,
+    }));
+
+    const result = await prisma.votes.createMany({
+      data: processedVotes,
+      skipDuplicates: true,
+    });
+
+    res.status(200).json({
+      message: "Votes successfully saved.",
+      data: { count: result.count },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+});
+
+// Update a specific vote for a place
+router.patch(
+  "/places/:id/votes/:voteId",
+  async (req: Request, res: Response) => {
+    const { voteId } = req.params;
+    const { status } = req.body;
+
+    try {
+      const updatedVote = await prisma.votes.update({
+        where: { id: parseInt(voteId, 10) },
+        data: { status },
+      });
+
+      res
+        .status(200)
+        .json({ message: "Vote updated successfully.", data: updatedVote });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error });
+    }
+  }
+);
 
 export default router;
