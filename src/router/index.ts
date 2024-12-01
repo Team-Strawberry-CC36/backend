@@ -1,5 +1,5 @@
 import express, { Request, Response, Router } from "express";
-import { Etiquette_per_experiences, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 // To protect routes with session verification
 import { verifySessionCookie } from '../auth/controllers/authController';
@@ -14,7 +14,6 @@ router.get("/places", async (req: Request, res: Response) => {
     const places = await prisma.places.findMany({
       include: {
         experiences: true,
-        images: true,
       },
     });
     res.json(places);
