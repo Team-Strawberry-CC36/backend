@@ -14,7 +14,6 @@ router.get("/places", async (req: Request, res: Response) => {
     const places = await prisma.places.findMany({
       include: {
         experiences: true,
-        images: true,
       },
     });
     res.json(places);
@@ -83,7 +82,11 @@ router.get(
         include: {
           etiquettes: {
             include: {
-              etiquette: true,
+              Place_etiquettes: {
+                include: {
+                  etiquette: true,
+                },
+              },
             },
           },
         },
@@ -98,8 +101,8 @@ router.get(
           editedAt: experience.edited_at,
         },
         etiquettes: experience.etiquettes.map((e) => ({
-          id: e.etiquette.id,
-          label: e.etiquette.label,
+          id: e.Place_etiquettes.id,
+          label: e.Place_etiquettes.etiquette.label,
         })),
       }));
 
@@ -324,8 +327,11 @@ router.get("/places/:id/votes", async (req: Request, res: Response) => {
 
     const response = etiquettes.map((etiquette) => {
       const voteCounts = etiquette.votes.reduce(
-        (acc, vote) => {
-          const status = vote.status.toLowerCase();
+        (acc: Record<"allowed" | "not_allowed" | "neutral", number>, vote) => {
+          const status = vote.status.toLowerCase() as
+            | "allowed"
+            | "not_allowed"
+            | "neutral";
           acc[status] += 1;
           return acc;
         },
@@ -353,13 +359,12 @@ router.get("/places/:id/votes", async (req: Request, res: Response) => {
 
 // Insert votes for a place
 router.post("/places/:id/votes", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { votes, userId } = req.body;
+  const userId = req.body.user_id;
+  const votes = req.body.votes;
 
   try {
-    const placeId = parseInt(id, 10);
-    const processedVotes = votes.map((vote) => ({
-      place_etiquette_id: vote.etiquetteId,
+    const processedVotes = votes.map((vote: { id: number; vote: string }) => ({
+      place_etiquette_id: vote.id,
       user_id: userId,
       status: vote.vote,
     }));
@@ -369,9 +374,8 @@ router.post("/places/:id/votes", async (req: Request, res: Response) => {
       skipDuplicates: true,
     });
 
-    res.status(200).json({
-      message: "Votes successfully saved.",
-      data: { count: result.count },
+    res.status(201).json({
+      data: result,
     });
   } catch (error) {
     console.error(error);
@@ -392,9 +396,7 @@ router.patch(
         data: { status },
       });
 
-      res
-        .status(200)
-        .json({ message: "Vote updated successfully.", data: updatedVote });
+      res.status(200).json({ data: updatedVote });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error });
