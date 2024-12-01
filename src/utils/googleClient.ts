@@ -1,5 +1,9 @@
 import { v1 } from "@googlemaps/places";
+import { google } from "@googlemaps/places/build/protos/protos";
 import { GoogleAuth } from "google-auth-library";
+
+// ALIAS
+type GooglePlace = google.maps.places.v1.IPlace;
 
 export default class GoogleClient {
   private apiKey!: string;
@@ -25,44 +29,63 @@ export default class GoogleClient {
    * @param location bias if provied
    * @returns array of object with id and location
    */
-  async textSearch(textQuery: string, location?: any): Promise<any> {
-    const FIELD = "places.id";
+  async textSearch(textQuery: string, location?: any): Promise<GooglePlace[]> {
+    const FIELD = "places.id,places.location";
 
     const tokyoCenterLocation = {
       lat: 35.6764,
       lon: 139.65,
     };
 
-    const query = await this.placesClient.searchText(
-      {
-        textQuery,
-        locationBias: {
-          circle: {
-            center: {
-              latitude: tokyoCenterLocation.lat,
-              longitude: tokyoCenterLocation.lon,
+    const query = (
+      await this.placesClient.searchText(
+        {
+          textQuery,
+          locationBias: {
+            circle: {
+              center: {
+                latitude: tokyoCenterLocation.lat,
+                longitude: tokyoCenterLocation.lon,
+              },
+              radius: 1000,
             },
-            radius: 1000,
           },
         },
-      },
-      {
-        otherArgs: {
-          headers: {
-            "X-Goog-FieldMask": FIELD,
+        {
+          otherArgs: {
+            headers: {
+              "X-Goog-FieldMask": FIELD,
+            },
           },
-        },
-      }
-    );
-    return query[0].places;
+        }
+      )
+    )[0].places;
+
+    return query ? query : [];
   }
 
-  async searchPlaceDetails(placeId: string) {
-    const query = await this.placesClient.getPlace({
-      name: placeId,
-    });
+  async searchPlaceDetails(placeId: string): Promise<GooglePlace> {
+    const FIELD = "*";
 
-    return query[0];
+    try {
+      return (
+        await this.placesClient.getPlace(
+          {
+            name: `places/${placeId}`,
+          },
+          {
+            otherArgs: {
+              headers: {
+                "X-Goog-FieldMask": FIELD,
+              },
+            },
+          }
+        )
+      )[0];
+    } catch (e) {
+      console.log(e);
+      throw "Error inside searchPlaceDetails.";
+    }
   }
 
   async photoByPlace(placeId: string): Promise<string | null> {

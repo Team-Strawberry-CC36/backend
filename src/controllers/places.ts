@@ -1,31 +1,9 @@
-import { placeDetails } from "@googlemaps/google-maps-services-js/dist/places/details";
-import { PlaceType, PrismaClient } from "@prisma/client";
+import { PlaceType } from "@prisma/client";
 import { Request, Response } from "express";
-import { IPlace, IPlaceType } from "src/interfaces/places";
 import PlaceModel from "src/models/places";
-
-const prisma = new PrismaClient();
-
-// Helper function to valid enum
-const PLACE_TYPES: {
-  [index: string]: PlaceType;
-} = {
-  shrine: "SHRINE",
-  restaurant: "RESTAURANT",
-  onsen: "ONSEN",
-};
 
 // Types
 type Controller = (req: Request, res: Response) => void;
-
-type SearchRequest = {
-  textQuery?: string;
-  loc?: {
-    lat: number;
-    lon: number;
-  };
-  category?: string;
-};
 
 /**
  * Function in charge of search places and returns the markers
@@ -35,21 +13,24 @@ type SearchRequest = {
  */
 const search: Controller = async (req, res) => {
   try {
-    const { textQuery, category }: SearchRequest = req.body.body;
+    const textQuery = req.body.textQuery as string;
+    const category = req.body.category as PlaceType;
 
+    // Throw error if either the query of the category are not correct.
     validateSearch(textQuery, category);
 
     // Filtering!
     const enhancedTextQuery = category + " " + textQuery;
+
     // Already validate it.
     const markers = await PlaceModel.getMarkers(enhancedTextQuery!, category!);
 
     return res.send({ message: "", data: markers });
   } catch (e) {
-    console.log(e);
-    return res
-      .status(500)
-      .send({ message: "An error occurred while processing your request." });
+    return res.status(500).send({
+      message: "An error occurred while processing your request.",
+      error: e,
+    });
   }
 };
 
@@ -61,31 +42,40 @@ const search: Controller = async (req, res) => {
  */
 const getPlaceDetails: Controller = async (req, res) => {
   try {
-    const { id, category } = req.params;
+    const { id } = req.params;
 
-    if (!id || !category) {
+    if (!id || typeof id !== "string") {
       return res.status(400).send({
-        message: "Error! id and category must be provided!",
+        message: "Error! id must be provided",
         data: null,
       });
     }
 
-    const query = await PlaceModel.getPlaceById(id, category);
+    const query = await PlaceModel.getPlaceById(id);
 
     res.send({
       message: "success!",
-      data: query,
+      data: query ? query : null,
     });
   } catch (e) {
     res.send({
       message: "Error inside getPlaceDetails",
-      data: null,
+      error: e,
     });
   }
 };
 
-// Helper function for validation
+// Helper function who makes validation for searching queries.
 const validateSearch = (textQuery?: string, category?: string) => {
+  // Object to validate it the placeType
+  const PLACE_TYPES: {
+    [index: string]: PlaceType;
+  } = {
+    shrine: "SHRINE",
+    restaurant: "RESTAURANT",
+    onsen: "ONSEN",
+  };
+
   if (!textQuery || typeof textQuery !== "string") {
     throw "textQuery must be provided and must be a string!";
   }

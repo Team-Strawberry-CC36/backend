@@ -45,7 +45,7 @@ type IPlaceType = "shrine" | "onsen" | "restaurant";
 export enum PlaceType {
   shrine = "SHRINE",
   onsen = "ONSEN",
-  restaurant = "RESTAURANT"
+  restaurant = "RESTAURANT",
 }
 
 interface IEtiquette {
@@ -61,4 +61,4 @@ interface IEtiquettePerExperience extends IEtiquette {}
 
 type EtiquetteStatus = "allowed" | "not-allowed";
 
-export { IPlaceType, IPlace };
+export { IPlaceType, IPlace, IEtiquettePerPlace, IExperience };
