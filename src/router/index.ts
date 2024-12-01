@@ -12,7 +12,7 @@ import {
 const prisma = new PrismaClient();
 const router: Router = express.Router();
 
-//Retrieve the Place interfaced object
+// Pull the places data
 router.get("/places", async (req: Request, res: Response) => {
   try {
     const places = await prisma.places.findMany({
@@ -20,7 +20,7 @@ router.get("/places", async (req: Request, res: Response) => {
         experiences: true,
       },
     });
-    res.json(places);
+    res.send({ message: "", data: places });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });

@@ -1,21 +1,5 @@
 import { v1 } from "@googlemaps/places";
 import { GoogleAuth } from "google-auth-library";
-// import { loadConfig } from "tsconfig-paths";
-
-// Format a string "places/:string/photos/:refImg" to get refImg
-function formatPath(input: string) {
-  const keyword = "photos/";
-  const index = input.indexOf(keyword);
-  if (index !== -1) {
-    return input.substring(index + keyword.length);
-  }
-  return "";
-}
-
-const tokyoCenterLocation = {
-  lat: 35.6764,
-  lon: 139.65,
-};
 
 export default class GoogleClient {
   private apiKey!: string;
@@ -35,23 +19,19 @@ export default class GoogleClient {
     });
   }
 
-  async textSearch(textQuery: string, location?: any) {
+  /**
+   * Method who returns the places id with
+   * @param textQuery text search value
+   * @param location bias if provied
+   * @returns array of object with id and location
+   */
+  async textSearch(textQuery: string, location?: any): Promise<any> {
+    const FIELD = "places.id";
 
-    // Properties to query
-    const fields = [
-      "types",
-      // lab
-      "id",
-      "displayName",
-      "formattedAddress",
-      "location",
-      "googleMapsUri",
-      "websiteUri",
-      "photos",
-    ];
-
-    let formattedFields = fields.map((field) => "places." + field).join(",");
-    console.log(formattedFields);
+    const tokyoCenterLocation = {
+      lat: 35.6764,
+      lon: 139.65,
+    };
 
     const query = await this.placesClient.searchText(
       {
@@ -69,17 +49,23 @@ export default class GoogleClient {
       {
         otherArgs: {
           headers: {
-            "X-Goog-FieldMask": formattedFields
+            "X-Goog-FieldMask": FIELD,
           },
         },
       }
     );
-    console.log(query[0].places?.length);
     return query[0].places;
   }
 
-  async photoByPlace(ref: string): Promise<string | null> {
-    const placeId = formatPath(ref);
+  async searchPlaceDetails(placeId: string) {
+    const query = await this.placesClient.getPlace({
+      name: placeId,
+    });
+
+    return query[0];
+  }
+
+  async photoByPlace(placeId: string): Promise<string | null> {
     const localUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${placeId}&key=${this.apiKey}`;
 
     const res = await fetch(localUrl, {
@@ -92,13 +78,9 @@ export default class GoogleClient {
     }
 
     const bytes = await res.arrayBuffer();
-    const base64 = arrayBufferToBase64(bytes);
+    const bufferNode = Buffer.from(bytes);
+    const base64 = bufferNode.toString("base64");
 
     return base64;
   }
-}
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bufferNode = Buffer.from(buffer);
-  return bufferNode.toString("base64");
 }
