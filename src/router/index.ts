@@ -1,9 +1,13 @@
 import express, { Request, Response, Router } from "express";
+// Middlewares -> Help verify user auth in endpoints.
+import { verifySessionCookie } from '../auth/controllers/authController';
+// DB
 import {
   Etiquette,
   Etiquette_per_experiences,
   PrismaClient,
 } from "@prisma/client";
+
 
 const prisma = new PrismaClient();
 const router: Router = express.Router();

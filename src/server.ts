@@ -8,6 +8,7 @@ import "dotenv/config";
 import router from "@router/index";
 import testingRouter from "@router/testing";
 import moreTestingRouter from "@router/moreTesting";
+import auth from "@router/auth";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -22,11 +23,12 @@ const corsOptions: CorsOptions = {
 app.use(cors(corsOptions));
 app.use(morgan("dev"));
 
+// Use routes
 app.use("/", router);
-
 app.use("/testing", testingRouter);
-
 app.use("/moreTesting", moreTestingRouter);
+app.use("/auth", auth); // for registration, login, logout
+
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server Working!");

@@ -1,8 +1,8 @@
 import GoogleClient from "@utils/googleClient";
 import { Request, Response, Router } from "express";
-import { PrismaClient, PlaceType } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
-import { IPlace, IPlaceType } from "src/interfaces/places";
+import { IPlace, IPlaceType, PlaceType } from "src/interfaces/places";
 
 enum StatusCode {
   BadBehavior = 400,
@@ -27,13 +27,13 @@ const googleClient = new GoogleClient(process.env.GOOGLE_API_KEY);
 const prisma = new PrismaClient();
 
 // Helper function to valid enum
-const PLACE_TYPES: {
-  [index: string]: PlaceType;
-} = {
-  shrine: "SHRINE",
-  restaurant: "RESTAURANT",
-  onsen: "ONSEN",
-};
+// const PLACE_TYPES: {
+//   [index: string]: PlaceType;
+// } = {
+//   shrine: "SHRINE",
+//   restaurant: "RESTAURANT",
+//   onsen: "ONSEN",
+// };
 
 //@ts-ignore
 testingRouter.post("/search", async (req: Request, res: Response) => {
@@ -41,6 +41,7 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
   try {
     const { textQuery, category }: SearchRequest = req.body.body;
 
+    // Validate the places search request
     const validationError = validateSearchRequest(textQuery, category);
     if (validationError) {
       return res
@@ -48,6 +49,7 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
         .send({ message: validationError });
     }
 
+    // Run the search through Google API in order to receive the Places information from Google
     const enhancedTextQuery = category + " " + textQuery;
     const queryResults = await googleClient.textSearch(enhancedTextQuery!);
     if (!queryResults || queryResults?.length === 0) {
@@ -62,7 +64,7 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
 
     const refIds: number[] = [];
     for (const place of queryResults) {
-      const refId = await processPlace(place, PLACE_TYPES[category!]); // Already valid
+      const refId = await processPlace(place, PlaceType[category as keyof typeof PlaceType]); // Already valid
 
       if (refId) {
         refIds.push(refId);
@@ -86,6 +88,8 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
       }
     }
 
+    // Now retrieve all the etiquette data from the database
+    // for each respective place found in the google search
     const output = await prisma.places.findMany({
       where: { id: { in: refIds } },
       include: {
@@ -94,8 +98,9 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
         // images: true,
       },
     });
+    
 
-    const transformedOutput: IPlace[] = output.map((place) => {
+    const transformedOutput: IPlace[] = output.map((place: any) => {
       const test = (placeUpperCased: string) => {
         let x: any = {
           SHRINE: "shrine",
@@ -110,14 +115,14 @@ testingRouter.post("/search", async (req: Request, res: Response) => {
         id: place.id,
         name: place.name,
         address: place.address,
-        placeType: test(place.place_type),
+        placeType: test(place.placeType),
         location: {
-          latitude: place.latitude.toNumber(),
-          longitude: place.longitude.toNumber(),
+          latitude: place.location.latitude,
+          longitude: place.location.longitude,
         },
         metadata: {
-          createdAt: place.created_at,
-          updatedAt: place.edited_at,
+          createdAt: place.metadata.createdAt,
+          updatedAt: place.metadata.updatedAt,
         },
       };
 
@@ -145,22 +150,27 @@ const validateSearchRequest = (textQuery?: string, category?: string) => {
   if (textQuery.trim().length === 0) {
     return "textQuery cannot be empty!";
   }
-  if (!category || !(category in PLACE_TYPES)) {
+  if (!category || !(category in PlaceType)) {
     return "category must be a category type!";
   }
   return null;
 };
 
-// Helper function to process places
+/**
+ * Helper function to process places
+ * processPlace retrieves the place's id if it is in our database
+ * If it is not in our database, it creates a new database entry 
+ * and uses the place id from Google.
+ */
 const processPlace = async (place: any, category: PlaceType) => {
   const { id, displayName, location, formattedAddress, websiteUri } = place;
 
   if (!id) return null;
 
+  // Check id exists in our database and return it if so
   const existingPlace = await prisma.places.findFirst({
     where: { google_place_id: id },
   });
-
   if (existingPlace) return existingPlace.id;
 
   // For onsen
@@ -170,6 +180,8 @@ const processPlace = async (place: any, category: PlaceType) => {
   // For restaurant
   // "restaurant" | "food" | "bar" | "establishment" | "japanese_restaurant"
 
+  // The id does not exist in our database
+  // Perform additional checks regarding info from Google
   if (
     !displayName?.text ||
     !formattedAddress ||
@@ -179,19 +191,19 @@ const processPlace = async (place: any, category: PlaceType) => {
     return null;
   }
 
+  // Create a new database entry with place id from Google and return the place id.
   const newPlace = await prisma.places.create({
     data: {
-      name: displayName.text,
+      // name: displayName.text,
       google_place_id: id,
-      address: formattedAddress,
-      latitude: new Decimal(location.latitude),
-      longitude: new Decimal(location.longitude),
+      // address: formattedAddress,
+      // latitude: new Decimal(location.latitude),
+      // longitude: new Decimal(location.longitude),
       place_type: category,
-      website_uri: websiteUri || null,
-      general_info: "",
+      // website_uri: websiteUri || null,
+      // general_info: "",
     },
   });
-
   return newPlace.id;
 };
 

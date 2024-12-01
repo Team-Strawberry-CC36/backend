@@ -42,6 +42,12 @@ interface IPhoto {
 
 type IPlaceType = "shrine" | "onsen" | "restaurant";
 
+export enum PlaceType {
+  shrine = "SHRINE",
+  onsen = "ONSEN",
+  restaurant = "RESTAURANT"
+}
+
 interface IEtiquette {
   id: number;
   label: string;
