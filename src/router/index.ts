@@ -1,9 +1,13 @@
 import express, { Request, Response, Router } from "express";
-import { PrismaClient } from "@prisma/client";
-
-// To protect routes with session verification
+// Middlewares -> Help verify user auth in endpoints.
 import { verifySessionCookie } from '../auth/controllers/authController';
-// add verifySessionCookie as middleware to routes that need protecting
+// DB
+import {
+  Etiquette,
+  Etiquette_per_experiences,
+  PrismaClient,
+} from "@prisma/client";
+
 
 const prisma = new PrismaClient();
 const router: Router = express.Router();
@@ -69,58 +73,151 @@ router.delete("/places/:id", async (req: Request, res: Response) => {
 
 // --! Experiences endpoints
 
-// -- new endpoints
-// @ai
-// We need to get experiences from a place.
-router.get("/places/:placeId/experiences");
+// Get experiences from a place.
+router.get(
+  "/places/:placeId/experiences",
+  async (req: Request, res: Response) => {
+    try {
+      const { placeId } = req.params;
+      const parsedPlaceId = parseInt(placeId, 10);
+
+      const experiences = await prisma.experiences.findMany({
+        where: { place_id: parsedPlaceId },
+        include: {
+          etiquettes: {
+            include: {
+              Place_etiquettes: {
+                include: {
+                  etiquette: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const response = experiences.map((experience) => ({
+        id: experience.id,
+        experience: experience.experience,
+        dateVisited: experience.visited_at,
+        metadata: {
+          createdAt: experience.created_at,
+          editedAt: experience.edited_at,
+        },
+        etiquettes: experience.etiquettes.map((e) => ({
+          id: e.Place_etiquettes.id,
+          label: e.Place_etiquettes.etiquette.label,
+        })),
+      }));
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error });
+    }
+  }
+);
 
 // Get all votes from an experience
-router.get("/experiences/:id/votes");
+router.get("/experiences/:id/votes", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const parsedId = parseInt(id, 10);
+
+    const votes = await prisma.votes.findMany({
+      where: { experience_id: parsedId },
+      include: {
+        users_accounts: true,
+      },
+    });
+
+    const response = votes.map((vote) => ({
+      id: vote.id,
+      user: vote.users_accounts.username,
+      status: vote.status,
+    }));
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+});
 
 // Post a new vote from an user
-router.post("/experiences/:id/votes");
+router.post("/experiences/:id/votes", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const parsedId = parseInt(id, 10);
+    const { user_id, status } = req.body;
+
+    const newVote = await prisma.votes.create({
+      data: {
+        experience_id: parsedId,
+        user_id,
+        status,
+      },
+    });
+
+    res.status(200).json(newVote);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error });
+  }
+});
 
 // Change status of a vote
-router.post("/experiences/:expId/votes/:voteId");
+router.post(
+  "/experiences/:expId/votes/:voteId",
+  async (req: Request, res: Response) => {
+    try {
+      const { expId, voteId } = req.params;
+      const parsedExpId = parseInt(expId, 10);
+      const parsedVoteId = parseInt(voteId, 10);
 
-// Delete one specify vote
-router.delete("/experiences/:expId/votes/:voteId");
+      const { status } = req.body;
+
+      const updatedVote = await prisma.votes.update({
+        where: { id: parsedVoteId },
+        data: { status },
+      });
+
+      res.status(200).json(updatedVote);
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ error });
+    }
+  }
+);
+
+// Remove one specify vote
+router.delete(
+  "/experiences/:expId/votes/:voteId",
+  async (req: Request, res: Response) => {
+    try {
+      const voteID = req.params;
+      await prisma.votes.delete({
+        where: { id: Number(voteID) },
+      });
+      res.status(204).send();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+);
 // ---
 
 //Retrieve all experiences related to a specific place
-
-// ERRORS IN HERE
-// -- TYPESCRIPT
-//  This will fail because some variables are "any".
-// ex: formattedEtiquettes
-// The same with the routes below.
-//
 router.post("/places/:id/experiences", async (req: Request, res: Response) => {
-  console.log(req.body);
   try {
     const { id } = req.params;
-    /**
-    Daniel changes!
-    const { user_id, selectedEtiquette, experienceText } = req.body;
-    const newExperience = await prisma.experiences.create({
-      data: {
-        user_id: user_id,
-        place_id: Number(id),
-        experience: experienceText,
-        // place_etiquette_id: selectedEtiquette
-        //   ? Number(selectedEtiquette)
-        //   : null,
-      },
-    });
-    res.status(201).json({ message: "Not implemented" });
-    */
     const { user_id, dateVisited, dateCreated, experience, etiquettes } =
       req.body;
 
     const place = await prisma.places.findUnique({
       where: { id: Number(id) },
     });
-    const formattedEtiquettes = etiquettes?.map((etiquette: any) => ({
+    const formattedEtiquettes = etiquettes?.map((etiquette: Etiquette) => ({
       id: etiquette.id,
       label: etiquette.label,
     }));
@@ -164,10 +261,12 @@ router.patch(
       const { user_id, visited_at, created_at, experience, etiquettes } =
         req.body;
 
-      const formattedEtiquettes = etiquettes?.map((etiquette: any) => ({
-        id: etiquette.id,
-        label: etiquette.label,
-      }));
+      const formattedEtiquettes = etiquettes?.map(
+        (etiquette: Etiquette_per_experiences) => ({
+          id: etiquette.id,
+          label: etiquette,
+        })
+      );
 
       const updatedExperience = await prisma.experiences.update({
         where: { id: Number(expId) },
@@ -215,13 +314,98 @@ router.delete(
   }
 );
 
-// Voting endpoint
-router.post(
-  "/vote",
-  (req: Request, res: Response) => {
-    console.log(req.body);
-    res.status(200).json({"message": "success"})
+// --! Voting endpoint
+
+// Retrieve votes for a specific place
+router.get("/places/:id/votes", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const placeId = parseInt(id, 10);
+    const etiquettes = await prisma.place_etiquettes.findMany({
+      where: { place_id: placeId },
+      include: {
+        votes: true,
+        etiquette: true,
+      },
+    });
+
+    const response = etiquettes.map((etiquette) => {
+      const voteCounts = etiquette.votes.reduce(
+        (acc: Record<"allowed" | "not_allowed" | "neutral", number>, vote) => {
+          const status = vote.status.toLowerCase() as
+            | "allowed"
+            | "not_allowed"
+            | "neutral";
+          acc[status] += 1;
+          return acc;
+        },
+        { allowed: 0, not_allowed: 0, neutral: 0 }
+      );
+
+      return {
+        etiquetteId: etiquette.etiquette_id,
+        etiquetteType: etiquette.etiquette.label,
+        numberOfVotesForAllowed: voteCounts.allowed,
+        numberOfVotesForNotAllowed: voteCounts.not_allowed,
+        numberOfVotesForNeutral: voteCounts.neutral,
+      };
+    });
+
+    res.status(200).json({
+      message: "Votes retrieved successfully.",
+      data: response,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
   }
-)
+});
+
+// Insert votes for a place
+router.post("/places/:id/votes", async (req: Request, res: Response) => {
+  const userId = req.body.user_id;
+  const votes = req.body.votes;
+
+  try {
+    const processedVotes = votes.map((vote: { id: number; vote: string }) => ({
+      place_etiquette_id: vote.id,
+      user_id: userId,
+      status: vote.vote,
+    }));
+
+    const result = await prisma.votes.createMany({
+      data: processedVotes,
+      skipDuplicates: true,
+    });
+
+    res.status(201).json({
+      data: result,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+});
+
+// Update a specific vote for a place
+router.patch(
+  "/places/:id/votes/:voteId",
+  async (req: Request, res: Response) => {
+    const { voteId } = req.params;
+    const { status } = req.body;
+
+    try {
+      const updatedVote = await prisma.votes.update({
+        where: { id: parseInt(voteId, 10) },
+        data: { status },
+      });
+
+      res.status(200).json({ data: updatedVote });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error });
+    }
+  }
+);
 
 export default router;
