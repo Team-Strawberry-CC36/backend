@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
+import "express";
 import firebaseAdmin from '../../utils/firebase';
 import AuthorizeUsers from '../models/authModel';
 import { IUser } from 'src/interfaces/user';
+
+const testRequest: Request = {} as any;
+console.log(testRequest.user);
 
 export const insertNewUser = (req: Request, res: Response, next: NextFunction) => {
     // Prepare user input data for the AuthorizeUsers model.
