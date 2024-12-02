@@ -122,7 +122,7 @@ router.get("/experiences/:id/votes", async (req: Request, res: Response) => {
     const { id } = req.params;
 
     if (!id) {
-      return res.send({ message: "ID must be provided!" });
+      res.send({ message: "ID must be provided!" });
     }
 
     const parsedId = parseInt(id, 10);
@@ -140,7 +140,7 @@ router.get("/experiences/:id/votes", async (req: Request, res: Response) => {
       status: vote.status,
     }));
 
-    return res.status(400).send({
+    res.status(400).send({
       message: "Not implemented",
     });
   } catch (error) {

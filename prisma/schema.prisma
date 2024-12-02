@@ -82,6 +82,8 @@ model Votes {
   id                 Int              @id @default(autoincrement())
   user_id            String
   place_etiquette_id Int
+  experience_id      Int
+
   status             EtiquetteStatus
   // Relationships
   users_accounts     Users_accounts   @relation(fields: [user_id], references: [id])
