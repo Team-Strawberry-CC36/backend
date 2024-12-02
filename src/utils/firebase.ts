@@ -1,18 +1,19 @@
-import * as firebaseAdmin from 'firebase-admin';
-import * as dotenv from 'dotenv';
+import * as firebaseAdmin from "firebase-admin";
+import { readFileSync } from "fs";
 
-dotenv.config();
+const firebaseJsonPath = process.env.FIREBASE_JSON_PATH;
 
-if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is not defined in environment variables.');
+if (!firebaseJsonPath) {
+  throw new Error(
+    "FIREBASE_JSON_PATH is not defined in environment variables."
+  );
 }
 
-const serviceAccountKey = JSON.parse(
-    Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf-8')
-);
+const file = readFileSync(firebaseJsonPath, "utf-8");
+const settings = JSON.parse(file);
 
 firebaseAdmin.initializeApp({
-    credential: firebaseAdmin.credential.cert(serviceAccountKey),
+  credential: firebaseAdmin.credential.cert(settings),
 });
 
 export default firebaseAdmin;

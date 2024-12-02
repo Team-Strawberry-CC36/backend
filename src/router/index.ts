@@ -1,6 +1,6 @@
 import express, { Request, Response, Router } from "express";
 // Middlewares -> Help verify user auth in endpoints.
-import { verifySessionCookie } from '../auth/controllers/authController';
+import { verifySessionCookie } from "../auth/controllers/authController";
 // DB
 import {
   Etiquette,
@@ -8,11 +8,10 @@ import {
   PrismaClient,
 } from "@prisma/client";
 
-
 const prisma = new PrismaClient();
-const router: Router = express.Router();
+const router = express.Router();
 
-//Retrieve the Place interfaced object
+// Pull the places data
 router.get("/places", async (req: Request, res: Response) => {
   try {
     const places = await prisma.places.findMany({
@@ -20,7 +19,7 @@ router.get("/places", async (req: Request, res: Response) => {
         experiences: true,
       },
     });
-    res.json(places);
+    res.send({ message: "", data: places });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });
@@ -118,26 +117,32 @@ router.get(
   }
 );
 
-// Get all votes from an experience
 router.get("/experiences/:id/votes", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const parsedId = parseInt(id, 10);
 
-    const votes = await prisma.votes.findMany({
-      where: { experience_id: parsedId },
-      include: {
-        users_accounts: true,
-      },
-    });
+    if (!id) {
+      return res.send({ message: "ID must be provided!" });
+    }
 
-    const response = votes.map((vote) => ({
-      id: vote.id,
-      user: vote.users_accounts.username,
-      status: vote.status,
-    }));
+    // const parsedId = parseInt(id, 10);
 
-    res.status(200).json(response);
+    // // const votes = await prisma.votes.findMany({
+    // //   where: { experience_id: parsedId },
+    // //   include: {
+    // //     users_accounts: true,
+    // //   },
+    // // });
+
+    // // const response = votes.map((vote) => ({
+    // //   id: vote.id,
+    // //   user: vote.users_accounts.username,
+    // //   status: vote.status,
+    // // }));
+
+    // return res.status(400).send({
+    //   message: "Not implemented",
+    // });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });
@@ -151,18 +156,20 @@ router.post("/experiences/:id/votes", async (req: Request, res: Response) => {
     const parsedId = parseInt(id, 10);
     const { user_id, status } = req.body;
 
-    const newVote = await prisma.votes.create({
-      data: {
-        experience_id: parsedId,
-        user_id,
-        status,
-      },
-    });
+    // const newVote = await prisma.votes.create({
+    //   data: {
+    //     experience_id: parsedId,
+    //     user_id,
+    //     status,
+    //   },
+    // });
 
-    res.status(200).json(newVote);
+    res.status(400).send({
+      message: "Not auth",
+    });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).send({ error });
   }
 });
 
