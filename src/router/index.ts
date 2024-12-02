@@ -125,24 +125,24 @@ router.get("/experiences/:id/votes", async (req: Request, res: Response) => {
       return res.send({ message: "ID must be provided!" });
     }
 
-    // const parsedId = parseInt(id, 10);
+    const parsedId = parseInt(id, 10);
 
-    // // const votes = await prisma.votes.findMany({
-    // //   where: { experience_id: parsedId },
-    // //   include: {
-    // //     users_accounts: true,
-    // //   },
-    // // });
+    const votes = await prisma.votes.findMany({
+      where: { experience_id: parsedId },
+      include: {
+        users_accounts: true,
+      },
+    });
 
-    // // const response = votes.map((vote) => ({
-    // //   id: vote.id,
-    // //   user: vote.users_accounts.username,
-    // //   status: vote.status,
-    // // }));
+    const response = votes.map((vote) => ({
+      id: vote.id,
+      user: vote.users_accounts.username,
+      status: vote.status,
+    }));
 
-    // return res.status(400).send({
-    //   message: "Not implemented",
-    // });
+    return res.status(400).send({
+      message: "Not implemented",
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });
@@ -156,14 +156,13 @@ router.post("/experiences/:id/votes", async (req: Request, res: Response) => {
     const parsedId = parseInt(id, 10);
     const { user_id, status } = req.body;
 
-    // const newVote = await prisma.votes.create({
-    //   data: {
-    //     experience_id: parsedId,
-    //     user_id,
-    //     status,
-    //   },
-    // });
-
+    const newVote = await prisma.votes.create({
+      data: {
+        experience_id: parsedId,
+        user_id,
+        status,
+      },
+    });
     res.status(400).send({
       message: "Not auth",
     });
