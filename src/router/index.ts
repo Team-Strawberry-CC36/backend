@@ -127,16 +127,16 @@ router.get("/experiences/:id/votes", async (req: Request, res: Response) => {
 
     const parsedId = parseInt(id, 10);
 
-    const votes = await prisma.votes.findMany({
+    const votes = await prisma.helpfullness.findMany({
       where: { experience_id: parsedId },
       include: {
-        users_accounts: true,
+        users_account: true,
       },
     });
 
     const response = votes.map((vote) => ({
       id: vote.id,
-      user: vote.users_accounts.username,
+      user: vote.users_account.username,
       status: vote.status,
     }));
 
@@ -156,12 +156,11 @@ router.post("/experiences/:id/votes", async (req: Request, res: Response) => {
     const parsedId = parseInt(id, 10);
     const { user_id, status, place_etiquette_id } = req.body;
 
-    const newVote = await prisma.votes.create({
+    const newVote = await prisma.helpfullness.create({
       data: {
         user_id,
         experience_id: parsedId,
         status,
-        place_etiquette_id,
       },
     });
     res.status(400).send({
