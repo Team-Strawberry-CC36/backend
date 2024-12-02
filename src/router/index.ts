@@ -154,13 +154,14 @@ router.post("/experiences/:id/votes", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const parsedId = parseInt(id, 10);
-    const { user_id, status } = req.body;
+    const { user_id, status, place_etiquette_id } = req.body;
 
     const newVote = await prisma.votes.create({
       data: {
-        experience_id: parsedId,
         user_id,
+        experience_id: parsedId,
         status,
+        place_etiquette_id,
       },
     });
     res.status(400).send({
