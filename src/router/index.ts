@@ -173,7 +173,7 @@ router.post("/experiences/:id/votes", async (req: Request, res: Response) => {
 });
 
 // Change status of a vote
-router.post(
+router.patch(
   "/experiences/:expId/votes/:voteId",
   async (req: Request, res: Response) => {
     try {
