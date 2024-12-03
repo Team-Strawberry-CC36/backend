@@ -38,12 +38,27 @@ class PlaceModel {
   ): Promise<Marker[]> {
     const markers: Marker[] = [];
 
-    const query = await googleClient.textSearch(textQuery, category);
+    const categoryMap: { [key in PlaceType]: string } = {
+      SHRINE: "shrine",
+      RESTAURANT: "restaurant",
+      ONSEN: "spa",
+    };
 
-    query.forEach((place) => {
-      // Don't do anything
-      if (!place.id || !place.location?.latitude || !place.location.longitude) {
-        return;
+    const mappedCategory = categoryMap[category as PlaceType];
+
+    // Call GoogleClient.textSearch with the category as type
+    const queryResults = await googleClient.textSearch(
+      textQuery,
+      mappedCategory
+    );
+
+    queryResults.forEach((place) => {
+      if (
+        !place.id ||
+        !place.location?.latitude ||
+        !place.location?.longitude
+      ) {
+        return markers;
       }
 
       // Insert into markers response!
