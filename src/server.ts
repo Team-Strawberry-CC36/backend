@@ -26,10 +26,10 @@ app.use(cors(corsOptions));
 app.use(morgan("dev"));
 
 // Use routes
+app.use("/auth", authRouter);
 app.use("/", router);
 app.use(placesRouter);
 app.use("/moreTesting", moreTestingRouter);
-app.use("/auth", authRouter); // for registration, login, logout
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server Working!");
