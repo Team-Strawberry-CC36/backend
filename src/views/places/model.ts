@@ -98,15 +98,32 @@ class PlaceModel {
       });
 
       if (!existingPlace) {
-        const placeCreated = await prisma.places.createManyAndReturn({
-          data: {
-            google_place_id: query.id,
-            // NOTE [] This is default it
+        // 1. Get default categories per places
+        const etiquettesPerPlace = await prisma.etiquette.findMany({
+          where: {
             place_type: category,
           },
         });
 
-        if (placeCreated.length === 0) {
+        const placeCreated = await prisma.places.create({
+          data: {
+            google_place_id: query.id,
+            place_type: category,
+          },
+        });
+
+        // Create relationship between a place and a rule
+        const place_etiquette_query = await prisma.place_etiquettes.createMany({
+          data: etiquettesPerPlace.map((etiquette) => {
+            return {
+              place_id: placeCreated.id,
+              etiquette_id: etiquette.id,
+              status: "ALLOWED",
+            };
+          }),
+        });
+
+        if (placeCreated) {
           throw "Place created failed.";
         } else {
           temp = placeCreated[0];
