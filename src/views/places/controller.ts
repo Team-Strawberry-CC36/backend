@@ -15,7 +15,6 @@ const search: Controller = async (req, res) => {
   try {
     const textQuery = req.body.data.textQuery as string;
     const category = req.body.data.category as PlaceType;
-    const defaultEtiquette = req.body.data.defaultEtiquette as Etiquette;
 
     // Throw error if either the query of the category are not correct.
     validateSearch(textQuery, category);

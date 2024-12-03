@@ -6,7 +6,7 @@ import {
   EtiquetteStatus,
 } from "@prisma/client";
 import { googleClient, prisma } from "../../utils/index";
-import IPlace from "src/interfaces/frontend/Place";
+import { IPlace, IPlaceType } from "src/interfaces/frontend/Place";
 import {
   IEtiquettePerPlace,
   IEtiquetteStatus,
@@ -198,12 +198,23 @@ class PlaceModel {
         });
       }
 
+      const saveLifes = (category: PlaceType): IPlaceType => {
+        switch (category) {
+          case "ONSEN":
+            return "onsen";
+          case "RESTAURANT":
+            return "restaurant";
+          case "SHRINE":
+            return "shrine";
+        }
+      };
+
       // Parse to Iplace
       const placeFormatted: IPlace = {
         id: temp.id,
         name: query.displayName.text,
         address: query.formattedAddress,
-        placeType: category as PlaceType,
+        placeType: saveLifes(category),
         location: {
           latitude: query.location.latitude,
           longitude: query.location.longitude,
