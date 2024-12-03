@@ -11,15 +11,18 @@ const experiencesRouter = Router();
 // Helpfullness
 // Create
 experiencesRouter.post(
-  "/experiences/:id/helpfullness",
+  "/experiences/:id/votes",
   ExperienceController.addHFVote
 );
 
 // Update
 experiencesRouter.patch(
-  "/helpfullness/:id",
+  "/experiences/:id/votes/:id",
   ExperienceController.changeHFStatus
 );
 
 // Delete
-experiencesRouter.delete("/helpfullness/:id");
+experiencesRouter.delete(
+  "/experiences/:id/votes/:id",
+  ExperienceController.deleteHFVote
+);
