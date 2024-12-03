@@ -1,16 +1,12 @@
 import * as firebaseAdmin from "firebase-admin";
-import { readFileSync } from "fs";
 
-const firebaseJsonPath = process.env.FIREBASE_JSON_PATH;
+const firebaseSettings = process.env.FIREBASE_JSON_KEY;
 
-if (!firebaseJsonPath) {
-  throw new Error(
-    "FIREBASE_JSON_PATH is not defined in environment variables."
-  );
+if (firebaseAdmin === undefined) {
+  throw "firebaseJsonPath must be in ENV";
 }
 
-const file = readFileSync(firebaseJsonPath, "utf-8");
-const settings = JSON.parse(file);
+const settings = JSON.parse(firebaseSettings as string);
 
 firebaseAdmin.initializeApp({
   credential: firebaseAdmin.credential.cert(settings),

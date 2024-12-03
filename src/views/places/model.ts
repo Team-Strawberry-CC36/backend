@@ -1,6 +1,22 @@
-import { PlaceType, PrismaClient, Places } from "@prisma/client";
-import { googleClient, prisma } from "./../utils/index";
-import { IEtiquettePerPlace, IExperience, IPlace } from "src/interfaces/places";
+import {
+  PlaceType,
+  PrismaClient,
+  Places,
+  HelpfullnessLevel,
+  EtiquetteStatus,
+} from "@prisma/client";
+import { googleClient, prisma } from "../../utils/index";
+import IPlace from "src/interfaces/frontend/Place";
+import {
+  IEtiquettePerPlace,
+  IEtiquetteStatus,
+} from "src/interfaces/frontend/Etiquette";
+import IExperience from "src/interfaces/frontend/Experience";
+import {
+  IEtiquetteUsersVote,
+  IEtiquetteVotes,
+  VotesPerPlace,
+} from "src/interfaces/frontend/Vote";
 
 // TEMPORAL Marker
 // Interface who represents a Place for the frontend in their minimal state.
@@ -52,11 +68,9 @@ class PlaceModel {
    * @param placeId
    * @returns
    */
-
-  // NOTE
-  // This endpoint is hardcoded, it is working but it May have some errors
-  static async getPlaceById(
-    placeId: string
+  static async getIPlaceById(
+    placeId: string,
+    category: "ONSEN"
   ): Promise<IPlace | null | undefined> {
     try {
       const query = await googleClient.searchPlaceDetails(placeId);
@@ -64,8 +78,6 @@ class PlaceModel {
       if (!query) {
         throw "Error! Query with not results";
       }
-
-      console.log(query.displayName, query.formattedAddress);
 
       if (
         !query.id ||
@@ -90,7 +102,7 @@ class PlaceModel {
           data: {
             google_place_id: query.id,
             // NOTE [] This is default it
-            place_type: PlaceType.ONSEN,
+            place_type: category,
           },
         });
 
@@ -133,18 +145,29 @@ class PlaceModel {
       const etiquettes: IEtiquettePerPlace[] = rawEtiquettes.map((item) => {
         return {
           id: item.id,
-          // NOTE [ ] Status needs to be dynamic
-          status: "allowed",
+          status: formatEtiquetteStatus(item.status),
           label: item.etiquette.label,
         };
       });
 
-      const experiences: IExperience[] = rawExperiences.map((item) => {
-        return {
+      let experiences: IExperience[] = [];
+      for (let item of rawExperiences) {
+        const helpfullnessPerExperience = await prisma.helpfullness.findMany({
+          where: {
+            experience_id: item.id,
+          },
+        });
+
+        const helfullness = helpfullnessPerExperience.reduce((acc, current) => {
+          return acc + (current.status === "UP" ? 1 : -1);
+        }, 0);
+
+        experiences.push({
           id: item.id,
           username: item.user_id,
           experience: item.experience,
           dateVisited: item.visited_at,
+          helpfulness: helfullness,
           etiquettes: item.etiquettes.map((e) => {
             return {
               id: e.Place_etiquettes.id,
@@ -156,8 +179,8 @@ class PlaceModel {
             createdAt: item.created_at,
             updatedAt: item.edited_at,
           },
-        };
-      });
+        });
+      }
 
       // Parse to Iplace
       const placeFormatted: IPlace = {
@@ -182,6 +205,88 @@ class PlaceModel {
     } catch (error) {
       console.error("Oops! Something happend in placeModel.processPlace");
     }
+  }
+
+  static async getVotesPerPlace(placeId: number, userId: string) {
+    // 2. Get etiquettes per place
+    const etiquettesPerPlace = await prisma.place_etiquettes.findMany({
+      where: {
+        place_id: placeId,
+      },
+      include: {
+        etiquette: true,
+        votes: {
+          include: {
+            users_accounts: true,
+          },
+        },
+      },
+    });
+
+    // 2.1 construct etiquetteVotes
+    let etiquetteVotes: IEtiquetteVotes[] = etiquettesPerPlace.map((item) => {
+      let allowed = 0;
+      let notAllowed = 0;
+
+      for (let vote of item.votes) {
+        if (vote.status === "ALLOWED") {
+          allowed++;
+        } else if (vote.status === "NOT_ALLOWED") {
+          notAllowed++;
+        }
+      }
+
+      return {
+        etiquetteId: item.etiquette_id,
+        etiquetteType: item.etiquette.place_type,
+        numberOfVotesForAllowed: allowed,
+        numberOfVotesForNotAllowed: notAllowed,
+      };
+    });
+
+    // 3.0 construct usersVote
+    const validVoteStatus = (status: string): IEtiquetteStatus => {
+      switch (status) {
+        case "ALLOWED":
+          return "allowed";
+        case "NOT-ALLOWED":
+          return "not-allowed";
+        case "NEUTRAL":
+          return undefined;
+      }
+    };
+
+    let usersVote: IEtiquetteUsersVote[] = etiquettesPerPlace.map((item) => ({
+      etiquetteId: item.etiquette_id,
+      etiquetteType: item.etiquette.place_type,
+      vote: validVoteStatus(item.status),
+    }));
+
+    // 3.Construct object
+    let finalResult: VotesPerPlace = {
+      placeId: placeId,
+      userId: userId,
+      userHasVoted: false, // bad
+      // remaining
+      etiquetteVotes: etiquetteVotes,
+      usersVote: usersVote,
+    };
+
+    return finalResult;
+  }
+}
+
+function formatEtiquetteStatus(prop: string): IEtiquetteStatus {
+  let obj: any = {
+    ALLOWED: "allowed",
+    "NOT-ALLOWED": "not-allowed",
+    NEUTRAL: undefined,
+  };
+
+  if (obj[prop] != "allowed" && obj[prop] != "not-allowed") {
+    return undefined;
+  } else {
+    obj[prop];
   }
 }
 
