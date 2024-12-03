@@ -39,15 +39,6 @@ export default class GoogleClient {
     const defaultLocation = { lat: 35.6764, lon: 139.65 }; // Tokyo center
     const centerLocation = location || defaultLocation;
 
-    // Brian's code
-    // async textSearch(textQuery: string, location?: any): Promise<GooglePlace[]> {
-    //   const FIELD = "places.id,places.location";
-
-    //   const tokyoCenterLocation = {
-    //     lat: 35.6764,
-    //     lon: 139.65,
-    //   };
-
     try {
       const query = (
         await this.placesClient.searchText(

@@ -89,17 +89,6 @@ const validateSearch = (textQuery?: string, category?: string) => {
       )}`
     );
   }
-
-  // Brian's code
-  // if (!textQuery || typeof textQuery !== "string") {
-  //   throw "textQuery must be provided and must be a string!";
-  // }
-  // if (textQuery.trim().length === 0) {
-  //   throw "textQuery cannot be empty!";
-  // }
-  // if (!category || !(category in PLACE_TYPES)) {
-  //   throw "category must be a category type!";
-  // }
 };
 
 const PlaceController = {

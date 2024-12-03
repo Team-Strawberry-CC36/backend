@@ -49,17 +49,6 @@ class PlaceModel {
       ) {
         return;
       }
-
-      // Brian's code
-      // const query = await googleClient.textSearch(textQuery, category);
-
-      // query.forEach((place) => {
-      //   // Don't do anything
-      //   if (!place.id || !place.location?.latitude || !place.location.longitude) {
-      //     return;
-      //   }
-
-      // Didin't change anything here by Ai
       // Insert into markers response
       markers.push({
         id: place.id,
