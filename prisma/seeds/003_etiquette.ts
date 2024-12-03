@@ -3,6 +3,7 @@ import { Etiquette, PrismaClient, PlaceType } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function etiquettes() {
+  await prisma.etiquette.deleteMany();
   await prisma.etiquette.createMany({
     data: [
       { place_type: "ONSEN", label: "tattoos" },
