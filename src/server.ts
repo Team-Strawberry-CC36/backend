@@ -5,10 +5,12 @@ import cors, { CorsOptions } from "cors";
 // Environment variables
 import "dotenv/config";
 
+import firebaseAdmin from "@utils/firebase";
+
 import router from "@router/index";
-import testingRouter from "@router/testing";
 import moreTestingRouter from "@router/moreTesting";
-import auth from "@router/auth";
+import placesRouter from "./views/places/view";
+import authRouter from "src/views/authProposal/view";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -25,10 +27,9 @@ app.use(morgan("dev"));
 
 // Use routes
 app.use("/", router);
-app.use("/testing", testingRouter);
+app.use(placesRouter);
 app.use("/moreTesting", moreTestingRouter);
-app.use("/auth", auth); // for registration, login, logout
-
+app.use("/auth", authRouter); // for registration, login, logout
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server Working!");

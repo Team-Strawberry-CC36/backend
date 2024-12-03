@@ -1,10 +1,10 @@
 import { PlaceType } from "@prisma/client";
 import { Request, Response } from "express";
-import PlaceModel from "src/models/places";
+import { Controller } from "src/interfaces/express_shortcuts";
+import { VotesPerPlace } from "src/interfaces/frontend/Vote";
+import PlaceModel from "src/views/places/model";
 
 // Types
-type Controller = (req: Request, res: Response) => void;
-
 /**
  * Function in charge of search places and returns the markers
  * @param req
@@ -13,8 +13,8 @@ type Controller = (req: Request, res: Response) => void;
  */
 const search: Controller = async (req, res) => {
   try {
-    const textQuery = req.body.textQuery as string;
-    const category = req.body.category as PlaceType;
+    const textQuery = req.body.data.textQuery as string;
+    const category = req.body.data.category as PlaceType;
 
     // Throw error if either the query of the category are not correct.
     validateSearch(textQuery, category);
@@ -43,6 +43,10 @@ const search: Controller = async (req, res) => {
 const getPlaceDetails: Controller = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId: string = req.body.userId;
+
+    // [ ] change dynaimc
+    const category = "ONSEN";
 
     if (!id || typeof id !== "string") {
       return res.status(400).send({
@@ -51,11 +55,19 @@ const getPlaceDetails: Controller = async (req, res) => {
       });
     }
 
-    const query = await PlaceModel.getPlaceById(id);
+    const query = await PlaceModel.getIPlaceById(id, category);
+    // Voting data
+    let votes: VotesPerPlace[] = [];
+    if (query) {
+      let votes = await PlaceModel.getVotesPerPlace(query.id, userId);
+    }
 
     res.send({
       message: "success!",
-      data: query ? query : null,
+      data: {
+        ...query,
+        votesPerUser: votes,
+      },
     });
   } catch (e) {
     res.send({
