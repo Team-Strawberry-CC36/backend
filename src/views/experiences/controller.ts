@@ -2,6 +2,31 @@ import { Helpfullness, HelpfullnessLevel } from "@prisma/client";
 import { prisma } from "@utils/index";
 import { Controller } from "src/interfaces/express_shortcuts";
 
+const retrieveHFVote: Controller = async (req, res) => {
+  try {
+    const { experienceId } = req.params;
+
+    if ( !experienceId ) {
+      throw "Experience ID not provided."
+    }
+
+    const parsedId = parseInt(experienceId, 10);
+
+    const helpfulnessVoteData = await prisma.helpfullness.findMany({
+      where: {
+        user_id: req.body.userId,
+        experience_id: parsedId,
+      },
+    });
+
+    res.json(helpfulnessVoteData);
+
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error });
+  }
+}
+
 // Post a new vote from an user
 const addHFVote: Controller = async (req, res) => {
   try {
@@ -87,6 +112,7 @@ const deleteHFVote: Controller = async (req, res) => {
 };
 
 const ExperienceController = {
+  retrieveHFVote,
   addHFVote,
   changeHFStatus,
   deleteHFVote,
