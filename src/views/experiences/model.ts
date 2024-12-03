@@ -6,7 +6,7 @@ import {
   EtiquetteStatus,
 } from "@prisma/client";
 import { googleClient, prisma } from "../../utils/index";
-import IPlace from "src/interfaces/frontend/Place";
+import { IPlace } from "src/interfaces/frontend/Place";
 import {
   IEtiquettePerPlace,
   IEtiquetteStatus,
