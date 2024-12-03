@@ -1,7 +1,8 @@
-import type { IEtiquettePerPlace } from './Etiquette';
-import type IExperience from './Experience';
+import { PlaceType } from "@prisma/client";
+import type { IEtiquettePerPlace } from "./Etiquette";
+import type IExperience from "./Experience";
 
-export default interface IPlace {
+export interface IPlace {
   id: number;
   name: string;
   address: string;
@@ -19,7 +20,7 @@ export default interface IPlace {
   };
 }
 
-type IPlaceType = 'shrine' | 'onsen' | 'restaurant';
+export type IPlaceType = "shrine" | "onsen" | "restaurant";
 
 interface IPhoto {
   id: number;
