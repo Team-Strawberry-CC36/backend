@@ -10,7 +10,7 @@ import firebaseAdmin from "@utils/firebase";
 import router from "@router/index";
 import moreTestingRouter from "@router/moreTesting";
 import placesRouter from "./views/places/view";
-import authRouter from "src/views/authProposal/view";
+import authRouter from "src/views/auth/view";
 
 const app = express();
 const port = process.env.PORT || 3000;

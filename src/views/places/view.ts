@@ -1,6 +1,6 @@
 import { Router } from "express";
 import controller from "./controller";
-import { authenticateUser } from "src/views/authProposal/middlewares";
+import { authenticateUser } from "src/views/auth/middlewares";
 import PlaceModel from "./model";
 
 const placesRouter = Router();

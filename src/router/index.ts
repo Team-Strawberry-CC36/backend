@@ -5,7 +5,7 @@ import {
   Etiquette_per_experiences,
   PrismaClient,
 } from "@prisma/client";
-import { authenticateUser } from "@auth/middlewares";
+import { authenticateUser } from "src/views/auth/middlewares";
 
 const prisma = new PrismaClient();
 const router = express.Router();
