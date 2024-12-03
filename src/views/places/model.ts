@@ -70,7 +70,7 @@ class PlaceModel {
    */
   static async getIPlaceById(
     placeId: string,
-    category: "ONSEN"
+    category: PlaceType
   ): Promise<IPlace | null | undefined> {
     try {
       const query = await googleClient.searchPlaceDetails(placeId);
@@ -98,7 +98,7 @@ class PlaceModel {
       });
 
       if (!existingPlace) {
-        // 1. Get default categories per places
+        // 1. Get default etiquette per places
         const etiquettesPerPlace = await prisma.etiquette.findMany({
           where: {
             place_type: category,
@@ -158,7 +158,6 @@ class PlaceModel {
         },
       });
 
-      //
       const etiquettes: IEtiquettePerPlace[] = rawEtiquettes.map((item) => {
         return {
           id: item.id,
@@ -204,8 +203,7 @@ class PlaceModel {
         id: temp.id,
         name: query.displayName.text,
         address: query.formattedAddress,
-        // NOTe  [ ] placeType needs to be dynamic
-        placeType: "onsen",
+        placeType: category as PlaceType,
         location: {
           latitude: query.location.latitude,
           longitude: query.location.longitude,
