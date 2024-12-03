@@ -38,16 +38,16 @@ const addHFVote: Controller = async (req, res) => {
 
     const parsedId = parseInt(experienceId, 10);
 
-    const { status } = req.body;
+    const { vote } = req.body;
 
-    if (status != "down" || status != "up") {
+    if (vote != "down" || vote != "up") {
       throw "status must be provided, and need to be either up or down";
     }
 
     const newVote: Omit<Helpfullness, "id"> = {
       user_id: req.body.userId,
       experience_id: parsedId,
-      status: status,
+      status: vote,
     };
 
     const query = await prisma.helpfullness.create({
@@ -55,7 +55,7 @@ const addHFVote: Controller = async (req, res) => {
     });
 
     res.send({
-      message: "new Vote",
+      message: "New Vote",
       data: query,
     });
   } catch (error) {
