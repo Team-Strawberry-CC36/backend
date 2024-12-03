@@ -81,21 +81,26 @@ const getPlaceDetails: Controller = async (req, res) => {
 const validateSearch = (textQuery?: string, category?: string) => {
   // Object to validate it the placeType
   const PLACE_TYPES: {
-    [index: string]: PlaceType;
+    [key: string]: PlaceType;
   } = {
     shrine: "SHRINE",
     restaurant: "RESTAURANT",
     onsen: "ONSEN",
   };
 
-  if (!textQuery || typeof textQuery !== "string") {
-    throw "textQuery must be provided and must be a string!";
+  if (
+    !textQuery ||
+    typeof textQuery !== "string" ||
+    textQuery.trim().length === 0
+  ) {
+    throw new Error("textQuery must be a non-empty string!");
   }
-  if (textQuery.trim().length === 0) {
-    throw "textQuery cannot be empty!";
-  }
-  if (!category || !(category in PLACE_TYPES)) {
-    throw "category must be a category type!";
+  if (!category || !(category.toLowerCase() in PLACE_TYPES)) {
+    throw new Error(
+      `Invalid category! Supported categories: ${Object.keys(PLACE_TYPES).join(
+        ", "
+      )}`
+    );
   }
 };
 

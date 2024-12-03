@@ -29,39 +29,45 @@ export default class GoogleClient {
    * @param location bias if provied
    * @returns array of object with id and location
    */
-  async textSearch(textQuery: string, location?: any): Promise<GooglePlace[]> {
-    const FIELD = "places.id,places.location";
+  async textSearch(
+    textQuery: string,
+    type?: string, // For category filtering
+    location?: { lat: number; lon: number }
+  ): Promise<GooglePlace[]> {
+    const FIELD = "places.id,places.location,places.types";
+    const defaultLocation = { lat: 35.6764, lon: 139.65 }; // Tokyo center
+    const centerLocation = location || defaultLocation;
 
-    const tokyoCenterLocation = {
-      lat: 35.6764,
-      lon: 139.65,
-    };
-
-    const query = (
-      await this.placesClient.searchText(
-        {
-          textQuery,
-          locationBias: {
-            circle: {
-              center: {
-                latitude: tokyoCenterLocation.lat,
-                longitude: tokyoCenterLocation.lon,
+    try {
+      const query = (
+        await this.placesClient.searchText(
+          {
+            textQuery,
+            locationBias: {
+              circle: {
+                center: {
+                  latitude: centerLocation.lat,
+                  longitude: centerLocation.lon,
+                },
+                radius: 1000,
               },
-              radius: 1000,
             },
+            includedType: type,
           },
-        },
-        {
-          otherArgs: {
-            headers: {
-              "X-Goog-FieldMask": FIELD,
+          {
+            otherArgs: {
+              headers: {
+                "X-Goog-FieldMask": FIELD,
+              },
             },
-          },
-        }
-      )
-    )[0].places;
-
-    return query ? query : [];
+          }
+        )
+      )[0].places;
+      return query || [];
+    } catch (error) {
+      console.error(error);
+      throw new Error("Failed text search");
+    }
   }
 
   async searchPlaceDetails(placeId: string): Promise<GooglePlace> {
