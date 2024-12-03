@@ -5,9 +5,12 @@ import {
   Etiquette_per_experiences,
   PrismaClient,
 } from "@prisma/client";
+import { authenticateUser } from "@auth/middlewares";
 
 const prisma = new PrismaClient();
 const router = express.Router();
+
+router.use(authenticateUser);
 
 // Pull the places data
 router.get("/places", async (req: Request, res: Response) => {
@@ -115,50 +118,56 @@ router.get(
   }
 );
 
-//Retrieve all experiences related to a specific place
-router.post("/places/:id/experiences", async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { user_id, dateVisited, dateCreated, experience, etiquettes } =
-      req.body;
+// Adding a new experience
+type ExperienceAddPackage = {
+  dateVisited: string;
+  experience: string;
+  etiquetteSelected: {
+    etiquette_id: number;
+  }[];
+};
 
-    const place = await prisma.places.findUnique({
-      where: { id: Number(id) },
-    });
-    const formattedEtiquettes = etiquettes?.map((etiquette: Etiquette) => ({
-      id: etiquette.id,
-      label: etiquette.label,
-    }));
+router.post(
+  "/places/:placeId/experiences",
+  async (req: Request, res: Response) => {
+    try {
+      const { placeId } = req.params;
 
-    const newExperience = await prisma.experiences.create({
-      data: {
-        place_id: Number(id),
-        user_id,
-        visited_at: new Date(dateVisited),
-        created_at: new Date(dateCreated),
-        experience,
-        etiquettes: formattedEtiquettes,
-      },
-    });
+      const userId = req.body.userId;
 
-    const response = {
-      id: newExperience.id,
-      visited_at: newExperience.visited_at,
-      created_at: newExperience.created_at,
-      experience: newExperience.experience,
-      etiquettes: formattedEtiquettes || [],
-      metadata: {
-        visited_at: newExperience.visited_at,
-        created_at: newExperience.created_at,
-      },
-    };
+      // check data
+      const { dateVisited, experience, etiquetteSelected } = req.body
+        .data as ExperienceAddPackage;
 
-    res.status(201).json(response);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error });
+      const newExperience = await prisma.experiences.create({
+        data: {
+          place_id: parseInt(placeId),
+          user_id: userId,
+          visited_at: new Date(dateVisited),
+          experience: experience,
+        },
+      });
+
+      for (let etiquette of etiquetteSelected) {
+        const insertedEtiquette = await prisma.etiquette_per_experiences.create(
+          {
+            data: {
+              place_etiquette_id: etiquette.etiquette_id,
+              experience_id: newExperience.id,
+            },
+          }
+        );
+      }
+
+      res.status(201).json({
+        message: "Success",
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ error });
+    }
   }
-});
+);
 
 //Update details of a specific experience
 router.patch(

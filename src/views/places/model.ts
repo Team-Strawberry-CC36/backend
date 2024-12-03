@@ -123,10 +123,10 @@ class PlaceModel {
           }),
         });
 
-        if (placeCreated) {
+        if (!placeCreated) {
           throw "Place created failed.";
         } else {
-          temp = placeCreated[0];
+          temp = placeCreated;
         }
       } else {
         temp = existingPlace;
@@ -220,7 +220,10 @@ class PlaceModel {
 
       return placeFormatted;
     } catch (error) {
-      console.error("Oops! Something happend in placeModel.processPlace");
+      console.error(
+        "Oops! Something happend in placeModel.processPlace",
+        error
+      );
     }
   }
 
