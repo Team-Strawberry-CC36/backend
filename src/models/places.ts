@@ -1,4 +1,4 @@
-import { PlaceType, PrismaClient, Places } from "@prisma/client";
+import { PlaceType, Places } from "@prisma/client";
 import { googleClient, prisma } from "./../utils/index";
 import { IEtiquettePerPlace, IExperience, IPlace } from "src/interfaces/places";
 
@@ -20,21 +20,47 @@ class PlaceModel {
    * @param category
    * @returns
    */
+
   static async getMarkers(
     textQuery: string,
     category: string
   ): Promise<Marker[]> {
     const markers: Marker[] = [];
 
-    const query = await googleClient.textSearch(textQuery, category);
+    const categoryMap: { [key in PlaceType]: string } = {
+      SHRINE: "shrine",
+      RESTAURANT: "restaurant",
+      ONSEN: "spa",
+    };
 
-    query.forEach((place) => {
-      // Don't do anything
-      if (!place.id || !place.location?.latitude || !place.location.longitude) {
+    const mappedCategory = categoryMap[category as PlaceType];
+
+    // Call GoogleClient.textSearch with the category as type
+    const queryResults = await googleClient.textSearch(
+      textQuery,
+      mappedCategory
+    );
+
+    queryResults.forEach((place) => {
+      if (
+        !place.id ||
+        !place.location?.latitude ||
+        !place.location?.longitude
+      ) {
         return;
       }
 
-      // Insert into markers response!
+      // Brian's code
+      // const query = await googleClient.textSearch(textQuery, category);
+
+      // query.forEach((place) => {
+      //   // Don't do anything
+      //   if (!place.id || !place.location?.latitude || !place.location.longitude) {
+      //     return;
+      //   }
+
+      // Didin't change anything here by Ai
+      // Insert into markers response
       markers.push({
         id: place.id,
         location: {
@@ -43,7 +69,7 @@ class PlaceModel {
         },
       });
     });
-
+    console.log(markers);
     return markers;
   }
 
@@ -185,4 +211,5 @@ class PlaceModel {
   }
 }
 
+console.log(PlaceModel.getMarkers("onsen", PlaceType.ONSEN));
 export default PlaceModel;

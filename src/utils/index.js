@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.googleClient = exports.prisma = void 0;
+var client_1 = require("@prisma/client");
+var googleClient_1 = require("./googleClient");
+var apiKey = process.env.GOOGLE_API_KEY;
+var prisma = new client_1.PrismaClient();
+exports.prisma = prisma;
+var googleClient = new googleClient_1.default(apiKey);
+exports.googleClient = googleClient;
