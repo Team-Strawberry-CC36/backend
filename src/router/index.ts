@@ -378,4 +378,70 @@ router.patch(
   }
 );
 
+// Insert vote for ettiquette
+router.post("/places/:id/votes", async (req: Request, res: Response) => {
+  try {
+    const { votes } = req.body;
+    // Might need this for Firebase Auth middleware sets?
+    const userId = req.user?.uid;
+    const placeId = parseInt(req.params.id);
+
+    if (!userId || !placeId || !votes) {
+      res.status(400).json({ message: "Invalid" });
+    }
+
+    // Loop through the votes and create new entries
+    const createdVotes = await Promise.all(
+      votes.map((vote: any) =>
+        prisma.votes.create({
+          data: {
+            user_id: userId,
+            place_etiquette_id: vote.etiquetteId,
+            status: vote.vote?.toUpperCase() || "NEUTRAL",
+          },
+        })
+      )
+    );
+
+    res.status(201).json({ message: "success", data: createdVotes });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+});
+
+// Update a specific vote for etiquette
+router.patch("/places/:id/votes", async (req: Request, res: Response) => {
+  try {
+    const { votes } = req.body;
+    // Might need this for Firebase Auth middleware sets ?
+    const userId = req.user?.uid;
+    const placeId = parseInt(req.params.id);
+
+    if (!userId || !placeId || !votes) {
+      res.status(400).json({ message: "Invalid" });
+    }
+
+    // Loop through the votes and update existing entries
+    const updatedVotes = await Promise.all(
+      votes.map((vote: any) =>
+        prisma.votes.updateMany({
+          where: {
+            user_id: userId,
+            place_etiquette_id: vote.etiquetteId,
+          },
+          data: {
+            status: vote.vote?.toUpperCase() || "NEUTRAL",
+          },
+        })
+      )
+    );
+
+    res.status(200).json({ message: "success", data: updatedVotes });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+});
+
 export default router;
