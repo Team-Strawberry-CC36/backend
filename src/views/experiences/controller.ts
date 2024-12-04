@@ -4,25 +4,25 @@ import { Controller } from "src/interfaces/express_shortcuts";
 
 const retrieveHFVote: Controller = async (req, res) => {
   try {
-    const { experienceId } = req.params;
-
-    if ( !experienceId ) {
-      throw "Experience ID not provided."
-    }
-
-    const parsedId = parseInt(experienceId, 10);
-
     const helpfulnessVoteData = await prisma.helpfullness.findMany({
       where: {
         user_id: req.body.userId,
-        experience_id: parsedId,
       },
     });
 
-    res.json(helpfulnessVoteData);
+    const voteLowerCased = helpfulnessVoteData.map((vote) => {
+      return {
+        vote_id: vote.id,
+        user_id: vote.user_id,
+        experience_id: vote.experience_id,
+        helpfulness: vote.status.toLowerCase()
+      }
+    })
+
+    res.send({message: "Data retrieved", data: voteLowerCased})
+    return
 
   } catch (error) {
-    console.error(error);
     res.status(400).json({ error });
   }
 }
@@ -30,83 +30,85 @@ const retrieveHFVote: Controller = async (req, res) => {
 // Post a new vote from an user
 const addHFVote: Controller = async (req, res) => {
   try {
-    const { experienceId } = req.params;
+    const { exid } = req.params;
 
-    if (!experienceId) {
+    if (!exid) {
       throw "Id must be provided";
     }
 
-    const parsedId = parseInt(experienceId, 10);
+    const parsedId = parseInt(exid, 10);
 
     const { vote } = req.body;
 
-    if (vote != "down" || vote != "up") {
+    if (vote != "down" && vote != "up") {
       throw "status must be provided, and need to be either up or down";
     }
 
     const newVote: Omit<Helpfullness, "id"> = {
       user_id: req.body.userId,
       experience_id: parsedId,
-      status: vote,
+      status: vote.toUpperCase(),
     };
 
     const query = await prisma.helpfullness.create({
       data: newVote,
     });
 
-    res.send({
+    res.status(201).send({
       message: "New Vote",
       data: query,
     });
   } catch (error) {
-    console.error(error);
     res.status(400).send({ error });
   }
 };
 
 const changeHFStatus: Controller = async (req, res) => {
   try {
-    const { id, voteStatus } = req.params;
+    const { vid } = req.params;
+    const { vote } = req.body;
 
-    if (!id) throw "Id must be provided";
-    if (voteStatus != "UP" && voteStatus != "DOWN")
-      throw "status must be up or down";
+    if (!vid) throw new Error("ID must be provided");
+    if (!vote) throw new Error("Status must be provided");
 
-    const parsedId = parseInt(id);
+    const parsedId = parseInt(vid, 10);
+    if (isNaN(parsedId)) throw new Error("ID must be a valid number");
+
+    const normalizedVote = vote.toLowerCase();
+    if (normalizedVote !== "up" && normalizedVote !== "down")
+      throw new Error("Status must be 'up' or 'down'");
 
     const query = await prisma.helpfullness.update({
       where: { id: parsedId },
-      data: { status: voteStatus.toLowerCase() as HelpfullnessLevel },
+      data: { status: normalizedVote.toUpperCase() as HelpfullnessLevel },
     });
 
-    res.status(200).send({
-      message: "success",
+    res.status(201).send({
+      message: "Successfully edited vote.",
       data: query,
     });
   } catch (error) {
-    console.error(error);
     res.status(400).json({ error });
   }
 };
 
 const deleteHFVote: Controller = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { vid } = req.params;
 
-    if (!id) throw "Id must be provided";
+    if (!vid) throw "Id must be provided";
 
-    const parsedId = parseInt(id);
+    const parsedId = parseInt(vid);
 
     const query = await prisma.helpfullness.delete({
       where: { id: parsedId },
     });
 
-    res.status(200).send({
-      message: "success",
+    res.status(201).send({
+      message: "Successfully deleted vote.",
       data: query,
     });
   } catch (error) {
-    console.error(error);
     res.status(400).json({ error });
   }
 };
