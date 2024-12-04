@@ -5,8 +5,8 @@ import {
   Etiquette_per_experiences,
   PrismaClient,
 } from "@prisma/client";
-import { authenticateUser } from "@authProposal/middlewares";
 import axios from "axios";
+import { authenticateUser } from "@auth/middlewares";
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -381,9 +381,8 @@ router.patch(
 // Insert vote for ettiquette
 router.post("/places/:id/votes", async (req: Request, res: Response) => {
   try {
-    const { votes } = req.body;
+    const { votes, userId } = req.body;
     // Might need this for Firebase Auth middleware sets?
-    const userId = req.user?.uid;
     const placeId = parseInt(req.params.id);
 
     if (!userId || !placeId || !votes) {
@@ -413,9 +412,8 @@ router.post("/places/:id/votes", async (req: Request, res: Response) => {
 // Update a specific vote for etiquette
 router.patch("/places/:id/votes", async (req: Request, res: Response) => {
   try {
-    const { votes } = req.body;
+    const { votes, userId } = req.body;
     // Might need this for Firebase Auth middleware sets ?
-    const userId = req.user?.uid;
     const placeId = parseInt(req.params.id);
 
     if (!userId || !placeId || !votes) {
