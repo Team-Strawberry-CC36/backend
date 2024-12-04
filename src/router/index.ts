@@ -73,10 +73,10 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
     });
 
     if (!place) {
-      return res.status(404).json({ message: "Place not found." });
+      res.status(404).json({ message: "Place not found." });
     }
 
-    const { google_place_id } = place;
+    const google_place_id = place;
 
     // Use Google Place Details API to fetch photos
     const placeDetailsResponse = await axios.get(
@@ -93,16 +93,15 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
     const photos = placeDetailsResponse.data.result.photos;
 
     if (!photos || photos.length === 0) {
-      return res.status(404).json({ message: "No photos for this place." });
+      res.status(404).json({ message: "No photos for this place." });
     }
 
     // Generate photo URLs using Place Photos API
-    const photoUrls = photos
-      .slice(0, MAX_PHOTOS)
-      .map((photo: { photo_reference: any }) => {
-        //it might be possible this will not ensure a square image (400x400).
-        return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`;
-      });
+    const photoUrls = photos.slice(0, MAX_PHOTOS).map((photo: any) => {
+      //it might be possible this will not ensure a square image (400x400).
+      return `https://places.googleapis.com/v1/places/${google_place_id}/photos/${photo.name}/media?maxHeightPx=400&maxWidthPx=400&key=${GOOGLE_API_KEY}`;
+    });
+    console.log(photoUrls);
 
     res.status(200).json({ photos: photoUrls });
   } catch (error) {
