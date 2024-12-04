@@ -6,25 +6,34 @@ import { Controller } from "src/interfaces/express_shortcuts";
 const addHFVote: Controller = async (req, res) => {
   try {
     const { experienceId } = req.params;
+    const { userId, status } = req.body;
 
-    if (!experienceId) {
-      throw "Id must be provided";
+    if (!experienceId) throw "Experience ID must be provided";
+    if (!userId) throw "User ID must be provided";
+    if (status !== "up" && status !== "down") {
+      throw "Status must be provided and must be either 'up' or 'down'";
     }
+    const parsedExperienceId = parseInt(experienceId, 10);
 
-    const parsedId = parseInt(experienceId, 10);
+    // Check if the vote already exists
+    const existingVote = await prisma.helpfullness.findFirst({
+      where: {
+        experience_id: parsedExperienceId,
+        user_id: userId,
+      },
+    });
 
-    const { status } = req.body;
-
-    if (status != "down" || status != "up") {
-      throw "status must be provided, and need to be either up or down";
-    }
-
+    // Create a new vote if it doesn't exist
     const newVote: Omit<Helpfullness, "id"> = {
-      user_id: req.body.userId,
-      experience_id: parsedId,
-      status: status,
+      user_id: userId,
+      experience_id: parsedExperienceId,
+      status,
     };
-
+    if (existingVote) {
+      return res.status(400).json({
+        error: "Vote already exists",
+      });
+    }
     const query = await prisma.helpfullness.create({
       data: newVote,
     });
