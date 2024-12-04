@@ -9,17 +9,28 @@ const experiencesRouter = Router();
 // CHECK
 
 // Helpfullness
+// Get
+experiencesRouter.get(
+  "/experiences/votes",
+  ExperienceController.retrieveHFVote
+);
+
 // Create
 experiencesRouter.post(
-  "/experiences/:id/helpfullness",
+  "/experiences/:exid/votes",
   ExperienceController.addHFVote
 );
 
 // Update
 experiencesRouter.patch(
-  "/helpfullness/:id",
+  "/experiences/:exid/votes/:vid",
   ExperienceController.changeHFStatus
 );
 
 // Delete
-experiencesRouter.delete("/helpfullness/:id");
+experiencesRouter.delete(
+  "/experiences/:exid/votes/:vid",
+  ExperienceController.deleteHFVote
+);
+
+export default experiencesRouter;
