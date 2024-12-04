@@ -10,8 +10,8 @@ import firebaseAdmin from "@utils/firebase";
 import router from "@router/index";
 import moreTestingRouter from "@router/moreTesting";
 import placesRouter from "./views/places/view";
-import authRouter from "src/views/authProposal/view";
 import experiencesRouter from "./views/experiences/view";
+import authRouter from "src/views/auth/view";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -27,11 +27,11 @@ app.use(cors(corsOptions));
 app.use(morgan("dev"));
 
 // Use routes
+app.use("/auth", authRouter);
 app.use("/", router);
 app.use(experiencesRouter);
 app.use(placesRouter);
 app.use("/moreTesting", moreTestingRouter);
-app.use("/auth", authRouter); // for registration, login, logout
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server Working!");

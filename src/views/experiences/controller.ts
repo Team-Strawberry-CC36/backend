@@ -42,14 +42,29 @@ const addHFVote: Controller = async (req, res) => {
 
     if (vote != "down" && vote != "up") {
       throw "status must be provided, and need to be either up or down";
-    }
 
+    }
+    const parsedExperienceId = parseInt(experienceId, 10);
+
+    // Check if the vote already exists
+    const existingVote = await prisma.helpfullness.findFirst({
+      where: {
+        experience_id: parsedExperienceId,
+        user_id: userId,
+      },
+    });
+
+    // Create a new vote if it doesn't exist
     const newVote: Omit<Helpfullness, "id"> = {
       user_id: req.body.userId,
       experience_id: parsedId,
       status: vote.toUpperCase(),
     };
-
+    if (existingVote) {
+      return res.status(400).json({
+        error: "Vote already exists",
+      });
+    }
     const query = await prisma.helpfullness.create({
       data: newVote,
     });

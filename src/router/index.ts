@@ -5,10 +5,14 @@ import {
   Etiquette_per_experiences,
   PrismaClient,
 } from "@prisma/client";
-import { authenticateUser } from "@auth/middlewares";
+import { authenticateUser } from "@authProposal/middlewares";
+import axios from "axios";
 
 const prisma = new PrismaClient();
 const router = express.Router();
+
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+const MAX_PHOTOS = 3;
 
 router.use(authenticateUser);
 
@@ -54,6 +58,55 @@ router.patch("/places/:id", async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
+  }
+});
+
+// Fetch photos from google API
+router.get("/places/:id/photos", async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    // Fetch the place by ID
+    const place = await prisma.places.findUnique({
+      where: { id: Number(id) },
+      select: { google_place_id: true },
+    });
+
+    if (!place) {
+      res.status(404).json({ message: "Place not found." });
+    }
+
+    const google_place_id = place;
+
+    // Use Google Place Details API to fetch photos
+    const placeDetailsResponse = await axios.get(
+      `https://maps.googleapis.com/maps/api/place/details/json`,
+      {
+        params: {
+          place_id: google_place_id,
+          fields: "photos",
+          key: GOOGLE_API_KEY,
+        },
+      }
+    );
+
+    const photos = placeDetailsResponse.data.result.photos;
+
+    if (!photos || photos.length === 0) {
+      res.status(404).json({ message: "No photos for this place." });
+    }
+
+    // Generate photo URLs using Place Photos API
+    const photoUrls = photos.slice(0, MAX_PHOTOS).map((photo: any) => {
+      //it might be possible this will not ensure a square image (400x400).
+      return `https://places.googleapis.com/v1/places/${google_place_id}/photos/${photo.name}/media?maxHeightPx=400&maxWidthPx=400&key=${GOOGLE_API_KEY}`;
+    });
+    console.log(photoUrls);
+
+    res.status(200).json({ photos: photoUrls });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -324,5 +377,71 @@ router.patch(
     }
   }
 );
+
+// Insert vote for ettiquette
+router.post("/places/:id/votes", async (req: Request, res: Response) => {
+  try {
+    const { votes } = req.body;
+    // Might need this for Firebase Auth middleware sets?
+    const userId = req.user?.uid;
+    const placeId = parseInt(req.params.id);
+
+    if (!userId || !placeId || !votes) {
+      res.status(400).json({ message: "Invalid" });
+    }
+
+    // Loop through the votes and create new entries
+    const createdVotes = await Promise.all(
+      votes.map((vote: any) =>
+        prisma.votes.create({
+          data: {
+            user_id: userId,
+            place_etiquette_id: vote.etiquetteId,
+            status: vote.vote?.toUpperCase() || "NEUTRAL",
+          },
+        })
+      )
+    );
+
+    res.status(201).json({ message: "success", data: createdVotes });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+});
+
+// Update a specific vote for etiquette
+router.patch("/places/:id/votes", async (req: Request, res: Response) => {
+  try {
+    const { votes } = req.body;
+    // Might need this for Firebase Auth middleware sets ?
+    const userId = req.user?.uid;
+    const placeId = parseInt(req.params.id);
+
+    if (!userId || !placeId || !votes) {
+      res.status(400).json({ message: "Invalid" });
+    }
+
+    // Loop through the votes and update existing entries
+    const updatedVotes = await Promise.all(
+      votes.map((vote: any) =>
+        prisma.votes.updateMany({
+          where: {
+            user_id: userId,
+            place_etiquette_id: vote.etiquetteId,
+          },
+          data: {
+            status: vote.vote?.toUpperCase() || "NEUTRAL",
+          },
+        })
+      )
+    );
+
+    res.status(200).json({ message: "success", data: updatedVotes });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+});
 
 export default router;
