@@ -15,22 +15,22 @@ const retrieveHFVote: Controller = async (req, res) => {
         vote_id: vote.id,
         user_id: vote.user_id,
         experience_id: vote.experience_id,
-        helpfulness: vote.status.toLowerCase()
-      }
-    })
+        helpfulness: vote.status.toLowerCase(),
+      };
+    });
 
-    res.send({message: "Data retrieved", data: voteLowerCased})
-    return
-
+    res.send({ message: "Data retrieved", data: voteLowerCased });
+    return;
   } catch (error) {
     res.status(400).json({ error });
   }
-}
+};
 
 // Post a new vote from an user
 const addHFVote: Controller = async (req, res) => {
   try {
     const { exid } = req.params;
+    const { userId } = req.body;
 
     if (!exid) {
       throw "Id must be provided";
@@ -42,9 +42,8 @@ const addHFVote: Controller = async (req, res) => {
 
     if (vote != "down" && vote != "up") {
       throw "status must be provided, and need to be either up or down";
-
     }
-    const parsedExperienceId = parseInt(experienceId, 10);
+    const parsedExperienceId = parseInt(exid, 10);
 
     // Check if the vote already exists
     const existingVote = await prisma.helpfullness.findFirst({
