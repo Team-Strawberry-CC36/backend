@@ -5,7 +5,7 @@ import {
   Etiquette_per_experiences,
   PrismaClient,
 } from "@prisma/client";
-import { authenticateUser } from "@auth/middlewares";
+import { authenticateUser } from "@authProposal/middlewares";
 import axios from "axios";
 
 const prisma = new PrismaClient();
