@@ -5,8 +5,6 @@ import cors, { CorsOptions } from "cors";
 // Environment variables
 import "dotenv/config";
 
-import firebaseAdmin from "@utils/firebase";
-
 import router from "@router/index";
 import moreTestingRouter from "@router/moreTesting";
 import placesRouter from "./views/places/view";
