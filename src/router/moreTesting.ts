@@ -10,7 +10,7 @@ moreTestingRouter.get('/places/:id/votes', (req: Request, res: Response) => {
     // userID property can be retrieved from firebase authentication
     const mockEtiquetteVotesData = {
         placeId: 1,
-        userId: 'users uid from firebase',
+        userId: "V59GABMzBgS5iamjaa3omOrV07E2",
         userHasVoted : false,
         etiquetteVotes : [
             { etiquetteId: 1, etiquetteType: 'Smoking', numberOfVotesForAllowed: 100, numberOfVotesForNotAllowed: 1000 },
