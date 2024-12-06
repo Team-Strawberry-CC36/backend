@@ -66,7 +66,7 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     // Fetch the place by ID
-    const place = await prisma.places.findUnique({
+    const place = await prisma.places.findUniqueOrThrow({
       where: { id: Number(id) },
       select: { google_place_id: true },
     });
@@ -75,7 +75,7 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
       res.status(404).json({ message: "Place not found." });
     }
 
-    const google_place_id = place?.google_place_id;
+    const google_place_id = place.google_place_id;
     // Use Google Place Details API to fetch photos
     const placeDetailsResponse = await axios.get(
       `https://maps.googleapis.com/maps/api/place/details/json?placeid=${google_place_id}&key=${GOOGLE_API_KEY}`

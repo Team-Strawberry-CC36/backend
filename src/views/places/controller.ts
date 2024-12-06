@@ -46,8 +46,6 @@ const getPlaceDetails: Controller = async (req, res) => {
     const { id } = req.params;
     const category = req.query.category as IPlaceType;
 
-    console.log(category);
-
     // Validate `id` and `category`.
     if (!id || typeof id !== "string") {
       return res.status(400).send({
