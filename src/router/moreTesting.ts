@@ -1,8 +1,10 @@
 import { Request, Response, Router } from 'express';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 const moreTestingRouter: Router = Router();
 
-moreTestingRouter.get('/places/:id/votes', (req: Request, res: Response) => {
+moreTestingRouter.get('/places/:id/votes', async (req: Request, res: Response) => {
     // Please get data prepared in the following example format
     // Interface for data format is in frontend/src/utils/interfaces/PlaceEtiquetteVotes.ts
     
@@ -28,8 +30,88 @@ moreTestingRouter.get('/places/:id/votes', (req: Request, res: Response) => {
         ],
     };
 
+    const googlePlaceId = req.params.id;
+    const userId = req.body.userId;
+
+    // Step 1: Get the place and its type
+    const place = await prisma.places.findUnique({
+        where: { google_place_id: googlePlaceId },
+        select: { id: true, place_type: true },
+    });
+
+    if (!place) {
+        throw new Error("Place not found!");
+    }
+
+    const placeId = place.id;
+    const placeType = place.place_type;
+
+    // Step 2: Get all etiquettes for the place type
+    const etiquettesForPlaceType = await prisma.etiquette.findMany({
+        where: { place_type: placeType },
+    });
+
+    // Step 3: Get all votes for the place and user
+    const placeEtiquettesWithVotes = await prisma.place_etiquettes.findMany({
+        where: { place_id: placeId },
+        include: {
+            etiquette: true,
+            votes: { where: { user_id: userId } },
+        },
+    });
+
+    // Step 4: Process etiquetteVotes (aggregate all user votes for ALLOWED/NOT_ALLOWED)
+    const etiquetteVotes = etiquettesForPlaceType.map((etiquette) => {
+        
+        const placeEtiquette = placeEtiquettesWithVotes.find(
+            (pe) => pe.etiquette_id === etiquette.id
+        );
+
+        const numberOfVotesForAllowed = placeEtiquette
+            ? placeEtiquette.votes.filter((vote) => vote.status === "ALLOWED").length
+            : 0;
+        
+            const numberOfVotesForNotAllowed = placeEtiquette
+            ? placeEtiquette.votes.filter((vote) => vote.status === "NOT_ALLOWED").length
+            : 0;
+
+        return {
+            etiquetteId: etiquette.id,
+            etiquetteType: etiquette.label,
+            numberOfVotesForAllowed,
+            numberOfVotesForNotAllowed,
+        };
+    });
+
+    // Step 5: Build userVotes array
+    const usersVote = etiquettesForPlaceType.map((etiquette) => {
+        const voteRecord = placeEtiquettesWithVotes.find(
+            (pe) => pe.etiquette_id === etiquette.id && pe.votes.length > 0
+        );
+
+        return {
+            etiquetteId: etiquette.id,
+            etiquetteType: etiquette.label,
+            vote: voteRecord ? voteRecord.votes[0].status : undefined,
+        };
+    });
+
+    const userHasVoted = placeEtiquettesWithVotes.some(etiquetteRelation => 
+        etiquetteRelation.votes.some(vote => vote.user_id === userId)
+    );
+
+    const etiquetteVotesData = {
+        placeId,
+        userId,
+        userHasVoted,
+        etiquetteVotes,
+        usersVote,
+    };
+
+    console.log(etiquetteVotesData);
+
     // Please make sure that data is returned like this
-    res.status(200).json({ message: "Hooray, it was a success", data:mockEtiquetteVotesData });
+    res.status(200).json({ message: "Hooray, it was a success", data:etiquetteVotesData });
 });
 
 moreTestingRouter.post('/places/:id/votes', (req: Request, res: Response) => {
