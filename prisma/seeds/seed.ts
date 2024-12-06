@@ -10,7 +10,8 @@ setDBToInitialState();
 
 async function etiquettes() {
   // Reset Autoincrement
-  await prisma.etiquette.createMany({
+  console.log("creating etiquetts");
+  const result = await prisma.etiquette.createMany({
     data: [
       { place_type: "ONSEN", label: "Tattoos" },
       { place_type: "ONSEN", label: "Reservations" },
@@ -36,6 +37,7 @@ async function etiquettes() {
       { place_type: "RESTAURANT", label: "Pets" },
     ],
   });
+  console.log(result);
 }
 
 export default etiquettes;
