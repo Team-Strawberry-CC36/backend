@@ -1,137 +1,87 @@
-import { Helpfullness, HelpfullnessLevel } from "@prisma/client";
+import { Etiquette_per_experiences } from "@prisma/client";
 import { prisma } from "@utils/index";
 import { Controller } from "src/interfaces/express_shortcuts";
 
-const retrieveHFVote: Controller = async (req, res) => {
+const updateExperience: Controller = async (req, res) => {
   try {
-    const helpfulnessVoteData = await prisma.helpfullness.findMany({
-      where: {
-        user_id: req.body.userId,
-      },
-    });
+    const { id } = req.params;
 
-    const voteLowerCased = helpfulnessVoteData.map((vote) => {
-      return {
-        vote_id: vote.id,
-        user_id: vote.user_id,
-        experience_id: vote.experience_id,
-        helpfulness: vote.status.toLowerCase(),
-      };
-    });
+    const { data } = req.body;
 
-    res.send({ message: "Data retrieved", data: voteLowerCased });
-    return;
-  } catch (error) {
-    res.status(400).json({ error });
-  }
-};
-
-// Post a new vote from an user
-const addHFVote: Controller = async (req, res) => {
-  try {
-    const { exid } = req.params;
-    const { userId } = req.body;
-
-    if (!exid) {
-      throw "Id must be provided";
-    }
-
-    const parsedId = parseInt(exid, 10);
-
-    const { vote } = req.body;
-
-    if (vote != "down" && vote != "up") {
-      throw "status must be provided, and need to be either up or down";
-    }
-    const parsedExperienceId = parseInt(exid, 10);
-
-    // Check if the vote already exists
-    const existingVote = await prisma.helpfullness.findFirst({
-      where: {
-        experience_id: parsedExperienceId,
-        user_id: userId,
-      },
-    });
-
-    // Create a new vote if it doesn't exist
-    const newVote: Omit<Helpfullness, "id"> = {
-      user_id: req.body.userId,
-      experience_id: parsedId,
-      status: vote.toUpperCase(),
-    };
-    if (existingVote) {
-      return res.status(400).json({
-        error: "Vote already exists",
+    if (typeof data !== "string") {
+      return res.send({
+        message: "Error! data must be provided and needs to be an string",
       });
     }
-    const query = await prisma.helpfullness.create({
-      data: newVote,
+
+    // -- Not using for now
+    // const formattedEtiquettes = etiquettes?.map(
+    //   (etiquette: Etiquette_per_experiences) => ({
+    //     id: etiquette.id,
+    //     label: etiquette,
+    //   })
+    // );
+
+    const updatedExperience = await prisma.experiences.update({
+      where: { id: Number(id) },
+      data: {
+        experience: data,
+        edited_at: new Date(),
+      },
     });
 
-    res.status(201).send({
-      message: "New Vote",
-      data: query,
+    // Sending an update it response
+    // const response = {
+    //   id: updatedExperience.id,
+    //   user_id: updatedExperience.user_id,
+    //   visited_at: new Date(updatedExperience.visited_at),
+    //   experience: updatedExperience.experience,
+    //   etiquettes: formattedEtiquettes || [],
+    //   metadata: {
+    //     created_at: updatedExperience.created_at,
+    //   },
+    // };
+
+    res.status(204).send({
+      message: "Success",
+      data: null,
     });
   } catch (error) {
-    res.status(400).send({ error });
+    console.error(error);
+    res
+      .status(400)
+      .json({ message: "Error while updating an experiences", error });
   }
 };
 
-const changeHFStatus: Controller = async (req, res) => {
+const deleteExperience: Controller = async (req, res) => {
   try {
-    const { vid } = req.params;
-    const { vote } = req.body;
+    const { id } = req.params;
 
-    if (!vid) throw new Error("ID must be provided");
-    if (!vote) throw new Error("Status must be provided");
+    if (!id) {
+      return res.send({
+        message: "Error. Id must be provieded.",
+      });
+    }
 
-    const parsedId = parseInt(vid, 10);
-    if (isNaN(parsedId)) throw new Error("ID must be a valid number");
-
-    const normalizedVote = vote.toLowerCase();
-    if (normalizedVote !== "up" && normalizedVote !== "down")
-      throw new Error("Status must be 'up' or 'down'");
-
-    const query = await prisma.helpfullness.update({
-      where: { id: parsedId },
-      data: { status: normalizedVote.toUpperCase() as HelpfullnessLevel },
+    await prisma.experiences.delete({
+      where: { id: Number(id) },
     });
 
-    res.status(201).send({
-      message: "Successfully edited vote.",
-      data: query,
+    res.status(204).send({
+      message: "Success!",
+      data: null,
     });
   } catch (error) {
-    res.status(400).json({ error });
+    res.status(500).send({
+      message: "Error while deleting an experience",
+    });
   }
 };
 
-const deleteHFVote: Controller = async (req, res) => {
-  try {
-    const { vid } = req.params;
-
-    if (!vid) throw "Id must be provided";
-
-    const parsedId = parseInt(vid);
-
-    const query = await prisma.helpfullness.delete({
-      where: { id: parsedId },
-    });
-
-    res.status(201).send({
-      message: "Successfully deleted vote.",
-      data: query,
-    });
-  } catch (error) {
-    res.status(400).json({ error });
-  }
+const experienceController = {
+  deleteExperience,
+  updateExperience,
 };
 
-const ExperienceController = {
-  retrieveHFVote,
-  addHFVote,
-  changeHFStatus,
-  deleteHFVote,
-};
-
-export default ExperienceController;
+export default experienceController;

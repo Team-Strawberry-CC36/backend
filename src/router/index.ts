@@ -212,67 +212,72 @@ router.post(
   }
 );
 
-//Update details of a specific experience
-router.patch(
-  "/places/:id/experiences/:expId",
-  async (req: Request, res: Response) => {
-    try {
-      const { expId } = req.params;
-      const { user_id, visited_at, created_at, experience, etiquettes } =
-        req.body;
+/**
+ *  CODE MOVE IT TO views/experiences/controller
+ *
+ *
+ */
+// //Update details of a specific experience
+// router.patch(
+//   "/places/:id/experiences/:expId",
+//   async (req: Request, res: Response) => {
+//     try {
+//       const { expId } = req.params;
+//       const { user_id, visited_at, created_at, experience, etiquettes } =
+//         req.body;
 
-      const formattedEtiquettes = etiquettes?.map(
-        (etiquette: Etiquette_per_experiences) => ({
-          id: etiquette.id,
-          label: etiquette,
-        })
-      );
+//       const formattedEtiquettes = etiquettes?.map(
+//         (etiquette: Etiquette_per_experiences) => ({
+//           id: etiquette.id,
+//           label: etiquette,
+//         })
+//       );
 
-      const updatedExperience = await prisma.experiences.update({
-        where: { id: Number(expId) },
-        data: {
-          user_id,
-          visited_at: new Date(visited_at),
-          created_at: new Date(created_at),
-          experience,
-          etiquettes: formattedEtiquettes,
-        },
-      });
+//       const updatedExperience = await prisma.experiences.update({
+//         where: { id: Number(expId) },
+//         data: {
+//           user_id,
+//           visited_at: new Date(visited_at),
+//           created_at: new Date(created_at),
+//           experience,
+//           etiquettes: formattedEtiquettes,
+//         },
+//       });
 
-      const response = {
-        id: updatedExperience.id,
-        user_id: updatedExperience.user_id,
-        visited_at: new Date(updatedExperience.visited_at),
-        experience: updatedExperience.experience,
-        etiquettes: formattedEtiquettes || [],
-        metadata: {
-          created_at: updatedExperience.created_at,
-        },
-      };
+//       const response = {
+//         id: updatedExperience.id,
+//         user_id: updatedExperience.user_id,
+//         visited_at: new Date(updatedExperience.visited_at),
+//         experience: updatedExperience.experience,
+//         etiquettes: formattedEtiquettes || [],
+//         metadata: {
+//           created_at: updatedExperience.created_at,
+//         },
+//       };
 
-      res.status(200).json(response);
-    } catch (error) {
-      console.error(error);
-      res.status(400).json({ error });
-    }
-  }
-);
+//       res.status(200).json(response);
+//     } catch (error) {
+//       console.error(error);
+//       res.status(400).json({ error });
+//     }
+//   }
+// );
 
-//Remove experience by its ID
-router.delete(
-  "/places/:id/experiences/:expId",
-  async (req: Request, res: Response) => {
-    try {
-      const expID = req.params;
-      await prisma.experiences.delete({
-        where: { id: Number(expID) },
-      });
-      res.status(204).send();
-    } catch (error) {
-      res.status(400).json({ error });
-    }
-  }
-);
+// //Remove experience by its ID
+// router.delete(
+//   "/places/:id/experiences/:expId",
+//   async (req: Request, res: Response) => {
+//     try {
+//       const expID = req.params;
+//       await prisma.experiences.delete({
+//         where: { id: Number(expID) },
+//       });
+//       res.status(204).send();
+//     } catch (error) {
+//       res.status(400).json({ error });
+//     }
+//   }
+// );
 
 // --! Voting endpoint
 
