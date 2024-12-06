@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { EtiquetteStatus, PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const moreTestingRouter: Router = Router();
@@ -142,7 +142,7 @@ moreTestingRouter.post('/places/:id/votes', async (req: Request, res: Response) 
     const existingIds = existingPlaceEtiquettes.map((entry) => entry.etiquette_id);
     const idsToInsert = etiquetteIds.filter((id: any) => !existingIds.includes(id));
 
-    // insert the place etiquette ideas
+    // insert the place etiquette ids
     if (idsToInsert.length > 0) {
         await prisma.place_etiquettes.createMany({
             data: idsToInsert.map((etiquetteId: any) => {
@@ -202,7 +202,7 @@ moreTestingRouter.patch('/places/:id/votes', async (req: Request, res: Response)
         return res.status(400).json({ error: 'votes, placeId and userId are required' });
     }
 
-    const mapVoteStatus = (status: string | undefined): string => {
+    const mapVoteStatus = (status: string | undefined): EtiquetteStatus => {
         switch (status?.toLowerCase()) {
             case 'allowed':
                 return 'ALLOWED';
@@ -214,117 +214,176 @@ moreTestingRouter.patch('/places/:id/votes', async (req: Request, res: Response)
     }
 
     try {
-        // Step 1: Extract all etiquette IDs from the incoming data
-        const incomingEtiquetteIds = votes.map((vote: any) => vote.etiquetteId);
-
-        // Step 2: Ensure all 'place_etiquette' combinations exist
-        const existingPlaceEtiquettes = await prisma.place_etiquettes.findMany({
+        // Step 1: Fetch exiting Place_etiquette records
+        const etiquetteIds = votes.map((vote: any) => vote.etiquetteId);
+        const placeEtiquettes = await prisma.place_etiquettes.findMany({
             where: {
                 place_id: placeId,
-                etiquette_id: { in: incomingEtiquetteIds },
+                etiquette_id: { in: etiquetteIds },
             },
             select: { id: true, etiquette_id: true },
         });
 
         const etiquetteIdToPlaceEtiquetteId: Record<number, number> = {};
-        existingPlaceEtiquettes.forEach((entry) => {
+        placeEtiquettes.forEach((entry) => {
             etiquetteIdToPlaceEtiquetteId[entry.etiquette_id] = entry.id;
         });
 
-        const etiquetteIdsToInclude = incomingEtiquetteIds.filter(
-            (id: any) => !etiquetteIdToPlaceEtiquetteId[id]
-        );
-
-        if (etiquetteIdsToInclude.length > 0) {
-            await prisma.place_etiquettes.createMany({
-                data: etiquetteIdsToInclude.map((etiquetteId: any) => ({
-                    place_id: placeId,
-                    etiquette_id: etiquetteId,
-                    status: 'NEUTRAL',
-                })),
-            });
-
-            // Refresh the mapping after inserting new entries
-            const updatedPlaceEtiquettes = await prisma.place_etiquettes.findMany({
-                where: {
-                    place_id: placeId,
-                    etiquette_id: { in: incomingEtiquetteIds },
-                },
-                select: { id: true, etiquette_id: true },
-            });
-
-            updatedPlaceEtiquettes.forEach((entry) => {
-                etiquetteIdToPlaceEtiquetteId[entry.etiquette_id] = entry.id;
-            });
-        }
-
-        
-
-        // Step 3: Fetch all existing votes for the user at this place
+        // Step 2: Fetch existing votes for the user
+        const placeEtiquetteIds = Object.values(etiquetteIdToPlaceEtiquetteId);
         const existingVotes = await prisma.votes.findMany({
             where: {
                 user_id: userId,
-                place_etiquette_id: {
-                    in: Object.values(etiquetteIdToPlaceEtiquetteId),
-                },
+                place_etiquette_id: { in: placeEtiquetteIds },
             },
-            select: { id: true, place_etiquette_id: true, status: true },
+            select: { id: true, place_etiquette_id: true },
         });
 
-        const existingVoteMap = new Map(
-            existingVotes.map((vote) => [
-                vote.place_etiquette_id,
-                { id: vote.id, status: vote.status },
-            ])
-        );
+        const existingVoteMap: Record<number, number> = {};
+        existingVotes.forEach((vote) => {
+            existingVoteMap[vote.place_etiquette_id] = vote.id;
+        });
 
-        // Step 4: Prepare votes for update or insert
-        const votesToInsert: any[] = [];
-        const votesToUpdate: any[] = [];
+        // Step 3: Perform updates for existing votes
+        const updatePromises = votes
+            .filter((vote: any) => {
+                const placeEtiquetteId = etiquetteIdToPlaceEtiquetteId[vote.etiquetteId];
+                return existingVoteMap[placeEtiquetteId];
+            })
+            .map((vote: any) => {
+                const placeEtiquetteId = etiquetteIdToPlaceEtiquetteId[vote.etiquetteId];
+                const voteId = existingVoteMap[placeEtiquetteId];
 
-        for (const vote of votes) {
-            const placeEtiquetteId = etiquetteIdToPlaceEtiquetteId[vote.etiquetteId];
-            const existingVote = existingVoteMap.get(placeEtiquetteId);
-
-            const newStatus = mapVoteStatus(vote.vote);
-            if (existingVote) {
-                if (existingVote.status !== newStatus) {
-                    votesToUpdate.push({
-                        id: existingVote.id,
-                        status: newStatus,
-                    });
-                } else if (newStatus !== 'NEUTRAL') {
-                    votesToInsert.push({
-                        place_etiquette_id: placeEtiquetteId,
-                        user_id: userId,
-                        status: newStatus,
-                    });
-                }
-            }
-
-            // Step 5 Perform inserts
-            if (votesToInsert.length > 0) {
-                await prisma.votes.createMany({
-                    data:votesToInsert,
+                return prisma.votes.update({
+                    where: { id: voteId },
+                    data: { status: mapVoteStatus(vote.vote) }
                 });
-            }
+            });
 
-            // Step 6: Perform updates
-            if (votesToUpdate.length > 0) {
-                for (const update of votesToUpdate) {
-                    await prisma.votes.update({
-                        where: { id: update.id },
-                        data: { status: update.status },
-                    });
-                }
-            }
-        }
-        
-        res.status(200).json({ message: 'Votes updated successfully' });
+            const updateResults = await Promise.all(updatePromises);
+
+            return res.status(200).json({
+                message: 'Votes updated successfully',
+                data: updateResults,
+            });
+
     } catch (error) {
-        console.error(`Error updating votes:`, error);
-        res.status(500).json({ error: 'Something went wrong!' });
+        console.error("Error updating votes:", error);
+        return res.status(500).json({ message: 'Something went wrong!' });
     }
+
+    // try {
+    //     // Step 1: Extract all etiquette IDs from the incoming data
+    //     const incomingEtiquetteIds = votes.map((vote: any) => vote.etiquetteId);
+
+    //     // Step 2: Ensure all 'place_etiquette' combinations exist
+    //     const existingPlaceEtiquettes = await prisma.place_etiquettes.findMany({
+    //         where: {
+    //             place_id: placeId,
+    //             etiquette_id: { in: incomingEtiquetteIds },
+    //         },
+    //         select: { id: true, etiquette_id: true },
+    //     });
+
+    //     const etiquetteIdToPlaceEtiquetteId: Record<number, number> = {};
+    //     existingPlaceEtiquettes.forEach((entry) => {
+    //         etiquetteIdToPlaceEtiquetteId[entry.etiquette_id] = entry.id;
+    //     });
+
+    //     const etiquetteIdsToInclude = incomingEtiquetteIds.filter(
+    //         (id: any) => !etiquetteIdToPlaceEtiquetteId[id]
+    //     );
+
+    //     if (etiquetteIdsToInclude.length > 0) {
+    //         await prisma.place_etiquettes.createMany({
+    //             data: etiquetteIdsToInclude.map((etiquetteId: any) => ({
+    //                 place_id: placeId,
+    //                 etiquette_id: etiquetteId,
+    //                 status: 'NEUTRAL',
+    //             })),
+    //         });
+
+    //         // Refresh the mapping after inserting new entries
+    //         const updatedPlaceEtiquettes = await prisma.place_etiquettes.findMany({
+    //             where: {
+    //                 place_id: placeId,
+    //                 etiquette_id: { in: incomingEtiquetteIds },
+    //             },
+    //             select: { id: true, etiquette_id: true },
+    //         });
+
+    //         updatedPlaceEtiquettes.forEach((entry) => {
+    //             etiquetteIdToPlaceEtiquetteId[entry.etiquette_id] = entry.id;
+    //         });
+    //     }
+
+        
+
+    //     // Step 3: Fetch all existing votes for the user at this place
+    //     const existingVotes = await prisma.votes.findMany({
+    //         where: {
+    //             user_id: userId,
+    //             place_etiquette_id: {
+    //                 in: Object.values(etiquetteIdToPlaceEtiquetteId),
+    //             },
+    //         },
+    //         select: { id: true, place_etiquette_id: true, status: true },
+    //     });
+
+    //     const existingVoteMap = new Map(
+    //         existingVotes.map((vote) => [
+    //             vote.place_etiquette_id,
+    //             { id: vote.id, status: vote.status },
+    //         ])
+    //     );
+
+    //     // Step 4: Prepare votes for update or insert
+    //     const votesToInsert: any[] = [];
+    //     const votesToUpdate: any[] = [];
+
+    //     for (const vote of votes) {
+    //         const placeEtiquetteId = etiquetteIdToPlaceEtiquetteId[vote.etiquetteId];
+    //         const existingVote = existingVoteMap.get(placeEtiquetteId);
+
+    //         const newStatus = mapVoteStatus(vote.vote);
+    //         if (existingVote) {
+    //             if (existingVote.status !== newStatus) {
+    //                 votesToUpdate.push({
+    //                     id: existingVote.id,
+    //                     status: newStatus,
+    //                 });
+    //             } else if (newStatus !== 'NEUTRAL') {
+    //                 votesToInsert.push({
+    //                     place_etiquette_id: placeEtiquetteId,
+    //                     user_id: userId,
+    //                     status: newStatus,
+    //                 });
+    //             }
+    //         }
+
+    //         // Step 5 Perform inserts
+    //         if (votesToInsert.length > 0) {
+    //             await prisma.votes.createMany({
+    //                 data:votesToInsert,
+    //             });
+    //         }
+
+    //         // Step 6: Perform updates
+    //         if (votesToUpdate.length > 0) {
+    //             for (const update of votesToUpdate) {
+    //                 await prisma.votes.update({
+    //                     where: { id: update.id },
+    //                     data: { status: update.status },
+    //                 });
+    //             }
+    //         }
+    //     }
+
+    //     res.status(200).json({ message: 'Votes updated successfully' });
+    // } catch (error) {
+    //     console.error(`Error updating votes:`, error);
+    //     res.status(500).json({ error: 'Something went wrong!' });
+    // }
 })
 
 export default moreTestingRouter;
