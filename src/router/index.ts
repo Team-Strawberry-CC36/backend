@@ -78,15 +78,7 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
     const google_place_id = place?.google_place_id;
     // Use Google Place Details API to fetch photos
     const placeDetailsResponse = await axios.get(
-      // `https://maps.googleapis.com/maps/api/place/details/json`,
       `https://maps.googleapis.com/maps/api/place/details/json?placeid=${google_place_id}&key=${GOOGLE_API_KEY}`
-      // {
-      //   params: {
-      //     place_id: google_place_id,
-      //     fields: "photos",
-      //     key: GOOGLE_API_KEY,
-      //   },
-      // }
     );
 
     const photos = placeDetailsResponse.data.result.photos;
@@ -98,11 +90,10 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
     // Generate photo URLs using Place Photos API
     const photoUrls = photos.slice(0, MAX_PHOTOS).map((photo: any) => {
       //it might be possible this will not ensure a square image (400x400).
-      // return `https://places.googleapis.com/v1/places/${google_place_id}/photos/${photo.photo_reference}/media?maxHeightPx=400&maxWidthPx=400&key=${GOOGLE_API_KEY}`;
       return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`;
     });
 
-    res.status(200).json({ photos: photoUrls });
+    res.status(200).send({ data: photoUrls });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });
