@@ -1,6 +1,7 @@
 import { Etiquette, PlaceType } from "@prisma/client";
 import { Request, Response } from "express";
 import { Controller } from "src/interfaces/express_shortcuts";
+import { IPlaceType } from "src/interfaces/frontend/Place";
 import { VotesPerPlace } from "src/interfaces/frontend/Vote";
 import PlaceModel from "src/views/places/model";
 
@@ -43,36 +44,41 @@ const search: Controller = async (req, res) => {
 const getPlaceDetails: Controller = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId: string = req.body.userId;
+    const category = req.query.category as IPlaceType;
 
-    // [ ] change dynaimc
-    const category = "ONSEN";
-
+    // Validate `id` and `category`.
     if (!id || typeof id !== "string") {
       return res.status(400).send({
-        message: "Error! id must be provided",
+        message: "Error! id must be provided and must be a string.",
         data: null,
       });
     }
 
-    const query = await PlaceModel.getIPlaceById(id, category);
-    // Voting data
-    let votes: VotesPerPlace[] = [];
-    if (query) {
-      let votes = await PlaceModel.getVotesPerPlace(query.id, userId);
+    if (!category || typeof category !== "string") {
+      return res.status(400).send({
+        message: "Error! category must be provided and must be a string.",
+        data: null,
+      });
     }
 
-    res.send({
-      message: "success!",
-      data: {
-        ...query,
-        votesPerUser: votes,
-      },
-    });
-  } catch (e) {
-    res.send({
-      message: "Error inside getPlaceDetails",
-      error: e,
+    // Fetch place details by id and category.
+    const query = await PlaceModel.getIPlaceById(
+      id,
+      category.toUpperCase() as PlaceType
+    );
+
+    if (!query) {
+      return res.status(404).send({
+        message: "Place not found.",
+        data: null,
+      });
+    }
+
+    return res.send({ message: "success", data: query });
+  } catch (error) {
+    return res.status(500).send({
+      message: "Error inside getPlaceDetails.",
+      error: error,
     });
   }
 };
