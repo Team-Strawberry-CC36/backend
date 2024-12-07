@@ -17,6 +17,7 @@ import {
   IEtiquetteVotes,
   VotesPerPlace,
 } from "src/interfaces/frontend/Vote";
+import firebaseAdmin from "@utils/firebase";
 
 // TEMPORAL Marker
 // Interface who represents a Place for the frontend in their minimal state.
@@ -178,9 +179,11 @@ class PlaceModel {
           return acc + (current.status === "UP" ? 1 : -1);
         }, 0);
 
+        const username = await firebaseAdmin.auth().getUser(item.user_id);
+
         experiences.push({
           id: item.id,
-          username: item.user_id,
+          username: username.displayName || username.email || "Anonymous User",
           experience: item.experience,
           dateVisited: item.visited_at,
           helpfulness: helfullness,
