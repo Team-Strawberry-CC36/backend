@@ -215,6 +215,7 @@ class PlaceModel {
       // Parse to Iplace
       const placeFormatted: IPlace = {
         id: temp.id,
+        googlePlaceId: query.id,
         name: query.displayName.text,
         address: query.formattedAddress,
         placeType: saveLifes(category),
