@@ -4,6 +4,7 @@ import type IExperience from "./Experience";
 
 export interface IPlace {
   id: number;
+  googlePlaceId: string;
   name: string;
   address: string;
   placeType: IPlaceType;
