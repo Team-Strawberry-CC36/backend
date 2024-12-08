@@ -4,6 +4,7 @@ import GoogleClient from "@utils/googleClient";
 // Frontend interface used in Tourist Dashboard
 interface IPlaceVisited {
   experienceId: number; // ID of experience from Experiences table: id
+  googlePlaceId: string; // Google Place ID of the place from the Places table
   placeName: string; // Name of the place described in the experience
   placeType: string; // Type of the place described in the experience
   experience: string; // The written experience text from Experiences table: experience
@@ -45,6 +46,7 @@ class UserModel {
 
       let placeVisited: IPlaceVisited = {
         experienceId: exp.id,
+        googlePlaceId: placeObjVisited.google_place_id,
         placeName,
         placeType: placeObjVisited.place_type,
         experience: exp.experience,
