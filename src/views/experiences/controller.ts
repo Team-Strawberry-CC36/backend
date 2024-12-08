@@ -64,14 +64,25 @@ const deleteExperience: Controller = async (req, res) => {
       });
     }
 
-    await prisma.etiquette_per_experiences.deleteMany({
+    const experienceId = Number(id);
+
+    // Delete all related helpfulness votes
+    await prisma.helpfullness.deleteMany({
       where: {
-        experience_id: Number(id),
+        experience_id: experienceId,
       },
     });
 
+    // Delete related etiquettes for the experience
+    await prisma.etiquette_per_experiences.deleteMany({
+      where: {
+        experience_id: experienceId,
+      },
+    });
+
+    // Delete the experience itself
     await prisma.experiences.delete({
-      where: { id: Number(id) },
+      where: { id: experienceId },
     });
 
     res.status(204).send({
@@ -79,9 +90,10 @@ const deleteExperience: Controller = async (req, res) => {
       data: null,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({
       message: "Error while deleting an experience",
+      error,
     });
   }
 };
