@@ -1,4 +1,5 @@
 import { prisma } from "@utils/index";
+import GoogleClient from "@utils/googleClient";
 
 // Frontend interface used in Tourist Dashboard
 interface IPlaceVisited {
@@ -19,6 +20,9 @@ class UserModel {
       },
     });
 
+    // Initialize GoogleClient with API Key
+    const googleClient = new GoogleClient(process.env.GOOGLE_API_KEY);
+
     for (let exp of experiences) {
       const placeObjVisited = await prisma.places.findFirstOrThrow({
         where: {
@@ -26,9 +30,22 @@ class UserModel {
         },
       });
 
+      let placeName = "";
+
+      try {
+        // Use GoogleClient to fetch the place name
+        const placeDetails = await googleClient.searchPlaceDetails(
+          placeObjVisited.google_place_id
+        );
+        // Extract name from API response
+        placeName = placeDetails?.displayName || "";
+      } catch (error) {
+        console.error(`Place ID ${placeObjVisited.google_place_id}:`, error);
+      }
+
       let placeVisited: IPlaceVisited = {
         experienceId: exp.id,
-        placeName: "",
+        placeName,
         placeType: placeObjVisited.place_type,
         experience: exp.experience,
         dateVisited: exp.visited_at,
