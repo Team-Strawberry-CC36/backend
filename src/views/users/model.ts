@@ -38,7 +38,7 @@ class UserModel {
           placeObjVisited.google_place_id
         );
         // Extract name from API response
-        placeName = placeDetails?.displayName || "";
+        placeName = placeDetails?.displayName?.text || "";
       } catch (error) {
         console.error(`Place ID ${placeObjVisited.google_place_id}:`, error);
       }
