@@ -60,7 +60,6 @@ const getPlaceDetails: Controller = async (req, res) => {
         data: null,
       });
     }
-
     // Fetch place details by id and category.
     const query = await PlaceModel.getIPlaceById(
       id,

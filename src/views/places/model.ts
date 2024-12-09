@@ -59,7 +59,7 @@ class PlaceModel {
           lat: place.location.latitude,
           lon: place.location.longitude,
         },
-        category: "onsen",
+        category: category as IPlaceType,
       });
     });
 

@@ -87,8 +87,6 @@ export default class GoogleClient {
         );
       });
 
-      console.log(filteredQuery);
-
       return filteredQuery;
     } catch (e) {
       console.log("Error trying to perform google search.");
