@@ -2,20 +2,23 @@
 We are a Jappuri! An app who make a bridge between Tourist and local places in Japan, teaching etiquettes and labels.
 
 ## Setup
+For this project we are using NodeJS + Express with TS connected to a PostgreSQL instance.
+
 Its important to have these env setted up
 ```
 PORT
 GOOGLE_API_KEY
 DATABASE_URL
+FRONTEND_URL
+FIREBASE_JSON_KEY
 ```
-
-To get the newest version in the database its important to create your own Database, and the run the next prisma comments
+### First steps
+Install dependencias, configure your own PostgreSQL, and run the next command!
 ```
 npx prisma migrate dev
 ```
 
 ## Run
-To run the server just type
 ```
 npm run dev
 ```
