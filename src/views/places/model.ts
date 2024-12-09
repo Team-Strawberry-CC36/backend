@@ -27,6 +27,7 @@ interface Marker {
     lat: number;
     lon: number;
   };
+  category: IPlaceType;
 }
 
 class PlaceModel {
@@ -58,6 +59,7 @@ class PlaceModel {
           lat: place.location.latitude,
           lon: place.location.longitude,
         },
+        category: "onsen",
       });
     });
 

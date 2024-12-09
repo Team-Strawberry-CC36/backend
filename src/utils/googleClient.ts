@@ -1,6 +1,7 @@
 import { v1 } from "@googlemaps/places";
 import { google } from "@googlemaps/places/build/protos/protos";
 import { GoogleAuth } from "google-auth-library";
+import { IPlaceType } from "src/interfaces/frontend/Place";
 
 // ALIAS
 type GooglePlace = google.maps.places.v1.IPlace;
@@ -29,39 +30,70 @@ export default class GoogleClient {
    * @param location bias if provied
    * @returns array of object with id and location
    */
-  async textSearch(textQuery: string, location?: any): Promise<GooglePlace[]> {
-    const FIELD = "places.id,places.location";
+  async textSearch(
+    textQuery: string,
+    category: string,
+    location?: any
+  ): Promise<GooglePlace[]> {
+    const FIELD = "places.id,places.location,places.types";
 
-    const tokyoCenterLocation = {
-      lat: 35.6764,
-      lon: 139.65,
-    };
-
-    const query = (
-      await this.placesClient.searchText(
-        {
-          textQuery,
-          locationBias: {
-            circle: {
-              center: {
-                latitude: tokyoCenterLocation.lat,
-                longitude: tokyoCenterLocation.lon,
+    try {
+      const query = (
+        await this.placesClient.searchText(
+          {
+            textQuery,
+            locationRestriction: {
+              rectangle: {
+                low: {
+                  latitude: 31.357402,
+                  longitude: 128.894464,
+                },
+                high: {
+                  latitude: 45.861283,
+                  longitude: 146.861331,
+                },
               },
-              radius: 1000,
             },
           },
-        },
-        {
-          otherArgs: {
-            headers: {
-              "X-Goog-FieldMask": FIELD,
+          {
+            otherArgs: {
+              headers: {
+                "X-Goog-FieldMask": FIELD,
+              },
             },
-          },
-        }
-      )
-    )[0].places;
+          }
+        )
+      )[0].places;
 
-    return query ? query : [];
+      let placeTypesRestricted: { [index: string]: Array<string> } = {
+        restaurant: ["restaurant"],
+        shrine: ["place_of_worship"],
+        onsen: ["japanese_bath", "span", "public_bath"],
+      };
+
+      if (!query) return [];
+
+      if (!placeTypesRestricted[category]) {
+        throw new Error(`Invalid category: ${category}`);
+      }
+
+      const filteredQuery = query.filter((place) => {
+        // We only care about the ones with types
+        if (!place.types) return false;
+
+        // We check if at least one restriction fullfilles
+        return placeTypesRestricted[category].some((value) =>
+          place.types!.includes(value)
+        );
+      });
+
+      console.log(filteredQuery);
+
+      return filteredQuery;
+    } catch (e) {
+      console.log("Error trying to perform google search.");
+      return [];
+    }
   }
 
   async searchPlaceDetails(placeId: string): Promise<GooglePlace> {
