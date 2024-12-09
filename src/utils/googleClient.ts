@@ -1,6 +1,7 @@
 import { v1 } from "@googlemaps/places";
 import { google } from "@googlemaps/places/build/protos/protos";
 import { GoogleAuth } from "google-auth-library";
+import { IPlaceType } from "src/interfaces/frontend/Place";
 
 // ALIAS
 type GooglePlace = google.maps.places.v1.IPlace;
@@ -31,28 +32,28 @@ export default class GoogleClient {
    */
   async textSearch(
     textQuery: string,
-    type?: string, // For category filtering
-    location?: { lat: number; lon: number }
+    category: string,
+    location?: any
   ): Promise<GooglePlace[]> {
     const FIELD = "places.id,places.location,places.types";
-    const defaultLocation = { lat: 35.6764, lon: 139.65 }; // Tokyo center
-    const centerLocation = location || defaultLocation;
 
     try {
       const query = (
         await this.placesClient.searchText(
           {
             textQuery,
-            locationBias: {
-              circle: {
-                center: {
-                  latitude: centerLocation.lat,
-                  longitude: centerLocation.lon,
+            locationRestriction: {
+              rectangle: {
+                low: {
+                  latitude: 31.357402,
+                  longitude: 128.894464,
                 },
-                radius: 1000,
+                high: {
+                  latitude: 45.861283,
+                  longitude: 146.861331,
+                },
               },
             },
-            includedType: type,
           },
           {
             otherArgs: {
@@ -63,10 +64,35 @@ export default class GoogleClient {
           }
         )
       )[0].places;
-      return query || [];
-    } catch (error) {
-      console.error(error);
-      throw new Error("Failed text search");
+
+      let placeTypesRestricted: { [index: string]: Array<string> } = {
+        restaurant: ["restaurant"],
+        shrine: ["place_of_worship"],
+        onsen: ["japanese_bath", "span", "public_bath"],
+      };
+
+      if (!query) return [];
+
+      if (!placeTypesRestricted[category]) {
+        throw new Error(`Invalid category: ${category}`);
+      }
+
+      const filteredQuery = query.filter((place) => {
+        // We only care about the ones with types
+        if (!place.types) return false;
+
+        // We check if at least one restriction fullfilles
+        return placeTypesRestricted[category].some((value) =>
+          place.types!.includes(value)
+        );
+      });
+
+      console.log(filteredQuery);
+
+      return filteredQuery;
+    } catch (e) {
+      console.log("Error trying to perform google search.");
+      return [];
     }
   }
 

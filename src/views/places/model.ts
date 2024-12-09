@@ -6,7 +6,7 @@ import {
   EtiquetteStatus,
 } from "@prisma/client";
 import { googleClient, prisma } from "../../utils/index";
-import IPlace from "src/interfaces/frontend/Place";
+import { IPlace, IPlaceType } from "src/interfaces/frontend/Place";
 import {
   IEtiquettePerPlace,
   IEtiquetteStatus,
@@ -17,6 +17,7 @@ import {
   IEtiquetteVotes,
   VotesPerPlace,
 } from "src/interfaces/frontend/Vote";
+import firebaseAdmin from "@utils/firebase";
 
 // TEMPORAL Marker
 // Interface who represents a Place for the frontend in their minimal state.
@@ -26,6 +27,7 @@ interface Marker {
     lat: number;
     lon: number;
   };
+  category: IPlaceType;
 }
 
 class PlaceModel {
@@ -57,6 +59,7 @@ class PlaceModel {
           lat: place.location.latitude,
           lon: place.location.longitude,
         },
+        category: "onsen",
       });
     });
 
@@ -70,7 +73,7 @@ class PlaceModel {
    */
   static async getIPlaceById(
     placeId: string,
-    category: "ONSEN"
+    category: PlaceType
   ): Promise<IPlace | null | undefined> {
     try {
       const query = await googleClient.searchPlaceDetails(placeId);
@@ -98,18 +101,35 @@ class PlaceModel {
       });
 
       if (!existingPlace) {
-        const placeCreated = await prisma.places.createManyAndReturn({
-          data: {
-            google_place_id: query.id,
-            // NOTE [] This is default it
+        // 1. Get default etiquette per places
+        const etiquettesPerPlace = await prisma.etiquette.findMany({
+          where: {
             place_type: category,
           },
         });
 
-        if (placeCreated.length === 0) {
+        const placeCreated = await prisma.places.create({
+          data: {
+            google_place_id: query.id,
+            place_type: category,
+          },
+        });
+
+        // Create relationship between a place and a rule
+        const place_etiquette_query = await prisma.place_etiquettes.createMany({
+          data: etiquettesPerPlace.map((etiquette) => {
+            return {
+              place_id: placeCreated.id,
+              etiquette_id: etiquette.id,
+              status: "ALLOWED",
+            };
+          }),
+        });
+
+        if (!placeCreated) {
           throw "Place created failed.";
         } else {
-          temp = placeCreated[0];
+          temp = placeCreated;
         }
       } else {
         temp = existingPlace;
@@ -141,7 +161,6 @@ class PlaceModel {
         },
       });
 
-      //
       const etiquettes: IEtiquettePerPlace[] = rawEtiquettes.map((item) => {
         return {
           id: item.id,
@@ -162,9 +181,11 @@ class PlaceModel {
           return acc + (current.status === "UP" ? 1 : -1);
         }, 0);
 
+        const username = await firebaseAdmin.auth().getUser(item.user_id);
+
         experiences.push({
           id: item.id,
-          username: item.user_id,
+          username: username.displayName || username.email || "Anonymous User",
           experience: item.experience,
           dateVisited: item.visited_at,
           helpfulness: helfullness,
@@ -182,13 +203,24 @@ class PlaceModel {
         });
       }
 
+      const saveLifes = (category: PlaceType): IPlaceType => {
+        switch (category) {
+          case "ONSEN":
+            return "onsen";
+          case "RESTAURANT":
+            return "restaurant";
+          case "SHRINE":
+            return "shrine";
+        }
+      };
+
       // Parse to Iplace
       const placeFormatted: IPlace = {
         id: temp.id,
+        googlePlaceId: query.id,
         name: query.displayName.text,
         address: query.formattedAddress,
-        // NOTe  [ ] placeType needs to be dynamic
-        placeType: "onsen",
+        placeType: saveLifes(category),
         location: {
           latitude: query.location.latitude,
           longitude: query.location.longitude,
@@ -203,7 +235,10 @@ class PlaceModel {
 
       return placeFormatted;
     } catch (error) {
-      console.error("Oops! Something happend in placeModel.processPlace");
+      console.error(
+        "Oops! Something happend in placeModel.processPlace",
+        error
+      );
     }
   }
 

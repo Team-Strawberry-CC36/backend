@@ -3,10 +3,9 @@ import { IUser } from "src/interfaces/user";
 import { prisma } from "@utils/index";
 
 /**
- * AuthorizeUsers is the model for interacting with the prisma
- * database
+ * AuthorizeModel is for interacting with the prisma database
  */
-class AuthorizeUsers {
+class AuthorizeModel {
   private prisma: PrismaClient;
 
   constructor() {
@@ -75,4 +74,4 @@ class AuthorizeUsers {
   }
 }
 
-export default AuthorizeUsers;
+export default AuthorizeModel;

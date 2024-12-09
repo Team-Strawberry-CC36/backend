@@ -1,95 +1,106 @@
-import { Helpfullness, HelpfullnessLevel } from "@prisma/client";
+import { Etiquette_per_experiences } from "@prisma/client";
 import { prisma } from "@utils/index";
 import { Controller } from "src/interfaces/express_shortcuts";
 
-// Post a new vote from an user
-const addHFVote: Controller = async (req, res) => {
-  try {
-    const { experienceId } = req.params;
-
-    if (!experienceId) {
-      throw "Id must be provided";
-    }
-
-    const parsedId = parseInt(experienceId, 10);
-
-    const { status } = req.body;
-
-    if (status != "down" || status != "up") {
-      throw "status must be provided, and need to be either up or down";
-    }
-
-    const newVote: Omit<Helpfullness, "id"> = {
-      user_id: req.body.userId,
-      experience_id: parsedId,
-      status: status,
-    };
-
-    const query = await prisma.helpfullness.create({
-      data: newVote,
-    });
-
-    res.send({
-      message: "new Vote",
-      data: query,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(400).send({ error });
-  }
-};
-
-const changeHFStatus: Controller = async (req, res) => {
-  try {
-    const { id, voteStatus } = req.params;
-
-    if (!id) throw "Id must be provided";
-    if (voteStatus != "UP" && voteStatus != "DOWN")
-      throw "status must be up or down";
-
-    const parsedId = parseInt(id);
-
-    const query = await prisma.helpfullness.update({
-      where: { id: parsedId },
-      data: { status: voteStatus.toLowerCase() as HelpfullnessLevel },
-    });
-
-    res.status(200).send({
-      message: "success",
-      data: query,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error });
-  }
-};
-
-const deleteHFVote: Controller = async (req, res) => {
+const updateExperience: Controller = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!id) throw "Id must be provided";
+    const { data } = req.body;
 
-    const parsedId = parseInt(id);
+    if (typeof data !== "string") {
+      return res.send({
+        message: "Error! data must be provided and needs to be an string",
+      });
+    }
 
-    const query = await prisma.helpfullness.delete({
-      where: { id: parsedId },
+    // -- Not using for now
+    // const formattedEtiquettes = etiquettes?.map(
+    //   (etiquette: Etiquette_per_experiences) => ({
+    //     id: etiquette.id,
+    //     label: etiquette,
+    //   })
+    // );
+
+    const updatedExperience = await prisma.experiences.update({
+      where: { id: Number(id) },
+      data: {
+        experience: data,
+        edited_at: new Date(),
+      },
     });
 
-    res.status(200).send({
-      message: "success",
-      data: query,
+    // Sending an update it response
+    // const response = {
+    //   id: updatedExperience.id,
+    //   user_id: updatedExperience.user_id,
+    //   visited_at: new Date(updatedExperience.visited_at),
+    //   experience: updatedExperience.experience,
+    //   etiquettes: formattedEtiquettes || [],
+    //   metadata: {
+    //     created_at: updatedExperience.created_at,
+    //   },
+    // };
+
+    res.status(204).send({
+      message: "Success",
+      data: null,
     });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res
+      .status(400)
+      .json({ message: "Error while updating an experiences", error });
   }
 };
 
-const ExperienceController = {
-  addHFVote,
-  changeHFStatus,
-  deleteHFVote,
+const deleteExperience: Controller = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.send({
+        message: "Error. Id must be provieded.",
+      });
+    }
+
+    const experienceId = Number(id);
+
+    // Delete all related helpfulness votes
+    await prisma.helpfullness.deleteMany({
+      where: {
+        experience_id: experienceId,
+      },
+    });
+
+    // Delete related etiquettes for the experience
+    await prisma.etiquette_per_experiences.deleteMany({
+      where: {
+        experience_id: experienceId,
+      },
+    });
+
+    // Delete the experience itself
+    await prisma.experiences.delete({
+      where: { id: experienceId },
+    });
+
+    res.status(204).send({
+      message: "Success!",
+      data: null,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      message: "Error while deleting an experience",
+      error,
+    });
+  }
 };
 
-export default ExperienceController;
+const experienceController = {
+  deleteExperience,
+  updateExperience,
+};
+
+export default experienceController;

@@ -1,10 +1,9 @@
 import { Router } from "express";
-import { addUser, getUser } from "./controller";
+import { addUser } from "./controller";
+import { authenticateUser } from "./middlewares";
 
 const authRouter = Router();
 
-//
 authRouter.post("/user", addUser);
-authRouter.get("/user/:uid", getUser);
 
 export default authRouter;

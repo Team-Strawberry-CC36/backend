@@ -1,25 +1,15 @@
 import { Router } from "express";
-import { Controller } from "src/interfaces/express_shortcuts";
-import { prisma } from "@utils/index";
-import { Helpfullness, Votes } from "@prisma/client";
-import ExperienceController from "./controller";
+import experienceController from "./controller";
 
-const experiencesRouter = Router();
+const experienceRouter = Router();
 
-// CHECK
-
-// Helpfullness
-// Create
-experiencesRouter.post(
-  "/experiences/:id/helpfullness",
-  ExperienceController.addHFVote
+experienceRouter.patch(
+  "/experiences/:id",
+  experienceController.updateExperience
+);
+experienceRouter.delete(
+  "/experiences/:id",
+  experienceController.deleteExperience
 );
 
-// Update
-experiencesRouter.patch(
-  "/helpfullness/:id",
-  ExperienceController.changeHFStatus
-);
-
-// Delete
-experiencesRouter.delete("/helpfullness/:id");
+export default experienceRouter;
