@@ -1,11 +1,6 @@
-import express, { Request, Response, Router } from "express";
+import express, { Request, Response } from "express";
 // DB
-import {
-  Etiquette,
-  Etiquette_per_experiences,
-  PrismaClient,
-} from "@prisma/client";
-import { authenticateUser } from "@auth/middlewares";
+import { PrismaClient } from "@prisma/client";
 import axios from "axios";
 
 const prisma = new PrismaClient();
@@ -13,8 +8,6 @@ const router = express.Router();
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const MAX_PHOTOS = 3;
-
-router.use(authenticateUser);
 
 // Pull the places data
 router.get("/places", async (req: Request, res: Response) => {
