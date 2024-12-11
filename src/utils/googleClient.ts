@@ -86,8 +86,6 @@ export default class GoogleClient {
         throw new Error(`Invalid category: ${category}`);
       }
 
-      console.log(query);
-
       const filteredQuery = query.filter((place) => {
         // We only care about the ones with types
         if (!place.types) return false;

@@ -370,7 +370,6 @@ router.patch(
 router.post("/places/:id/votes", async (req: Request, res: Response) => {
   try {
     const { votes } = req.body;
-    console.log(votes);
     // Might need this for Firebase Auth middleware sets?
     //const userId = req.user?.uid;
     const userId = req.body.userId;
