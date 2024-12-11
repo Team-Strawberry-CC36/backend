@@ -10,7 +10,6 @@ setDBToInitialState();
 
 async function etiquettes() {
   // Reset Autoincrement
-  console.log("creating etiquetts");
   const result = await prisma.etiquette.createMany({
     data: [
       { place_type: "ONSEN", label: "Tattoos" },

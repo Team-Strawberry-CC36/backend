@@ -17,7 +17,7 @@ router.get("/places", async (req: Request, res: Response) => {
         experiences: true,
       },
     });
-    res.send({ message: "", data: places });
+    return res.send({ message: "", data: places });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });
@@ -31,7 +31,7 @@ router.post("/places", async (req: Request, res: Response) => {
     const newPlace = await prisma.places.create({
       data: placeData,
     });
-    res.status(201).json(newPlace);
+    return res.status(201).json(newPlace);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
@@ -47,7 +47,7 @@ router.patch("/places/:id", async (req: Request, res: Response) => {
       where: { id: Number(id) },
       data: updateData,
     });
-    res.json({ updatedPlace });
+    return res.json({ updatedPlace });
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
@@ -65,7 +65,7 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
     });
 
     if (!place) {
-      res.status(404).json({ message: "Place not found." });
+      return res.status(404).json({ message: "Place not found." });
     }
 
     const google_place_id = place.google_place_id;
@@ -77,7 +77,9 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
     const photos = placeDetailsResponse.data.result.photos;
 
     if (!photos || photos.length === 0) {
-      res.status(404).json({ message: "No photos for this place." });
+      return res
+        .status(404)
+        .send({ message: "No photos for this place.", data: null });
     }
 
     // Generate photo URLs using Place Photos API
@@ -86,7 +88,7 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
       return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`;
     });
 
-    res.status(200).send({ data: photoUrls });
+    return res.status(200).send({ data: photoUrls });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });
@@ -100,10 +102,10 @@ router.delete("/places/:id", async (req: Request, res: Response) => {
     await prisma.places.delete({
       where: { id: Number(id) },
     });
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    return res.status(400).json({ error });
   }
 });
 
@@ -146,7 +148,7 @@ router.get(
         })),
       }));
 
-      res.status(200).json(response);
+      return res.status(200).json(response);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error });
@@ -195,7 +197,7 @@ router.post(
         );
       }
 
-      res.status(201).json({
+      return res.status(201).json({
         message: "Success",
       });
     } catch (error) {
@@ -204,73 +206,6 @@ router.post(
     }
   }
 );
-
-/**
- *  CODE MOVE IT TO views/experiences/controller
- *
- *
- */
-// //Update details of a specific experience
-// router.patch(
-//   "/places/:id/experiences/:expId",
-//   async (req: Request, res: Response) => {
-//     try {
-//       const { expId } = req.params;
-//       const { user_id, visited_at, created_at, experience, etiquettes } =
-//         req.body;
-
-//       const formattedEtiquettes = etiquettes?.map(
-//         (etiquette: Etiquette_per_experiences) => ({
-//           id: etiquette.id,
-//           label: etiquette,
-//         })
-//       );
-
-//       const updatedExperience = await prisma.experiences.update({
-//         where: { id: Number(expId) },
-//         data: {
-//           user_id,
-//           visited_at: new Date(visited_at),
-//           created_at: new Date(created_at),
-//           experience,
-//           etiquettes: formattedEtiquettes,
-//         },
-//       });
-
-//       const response = {
-//         id: updatedExperience.id,
-//         user_id: updatedExperience.user_id,
-//         visited_at: new Date(updatedExperience.visited_at),
-//         experience: updatedExperience.experience,
-//         etiquettes: formattedEtiquettes || [],
-//         metadata: {
-//           created_at: updatedExperience.created_at,
-//         },
-//       };
-
-//       res.status(200).json(response);
-//     } catch (error) {
-//       console.error(error);
-//       res.status(400).json({ error });
-//     }
-//   }
-// );
-
-// //Remove experience by its ID
-// router.delete(
-//   "/places/:id/experiences/:expId",
-//   async (req: Request, res: Response) => {
-//     try {
-//       const expID = req.params;
-//       await prisma.experiences.delete({
-//         where: { id: Number(expID) },
-//       });
-//       res.status(204).send();
-//     } catch (error) {
-//       res.status(400).json({ error });
-//     }
-//   }
-// );
 
 // --! Voting endpoint
 
@@ -309,7 +244,7 @@ router.get("/places/:id/votes", async (req: Request, res: Response) => {
       };
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Votes retrieved successfully.",
       data: response,
     });
@@ -336,7 +271,7 @@ router.post("/places/:id/votes", async (req: Request, res: Response) => {
       skipDuplicates: true,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       data: result,
     });
   } catch (error) {
@@ -358,7 +293,7 @@ router.patch(
         data: { status },
       });
 
-      res.status(200).json({ data: updatedVote });
+      return res.status(200).json({ data: updatedVote });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error });
@@ -370,14 +305,13 @@ router.patch(
 router.post("/places/:id/votes", async (req: Request, res: Response) => {
   try {
     const { votes } = req.body;
-    console.log(votes);
     // Might need this for Firebase Auth middleware sets?
     //const userId = req.user?.uid;
     const userId = req.body.userId;
     const placeId = parseInt(req.params.id);
 
     if (!userId || !placeId || !votes) {
-      res.status(400).json({ message: "Invalid" });
+      return res.status(400).json({ message: "Invalid" });
     }
 
     // Loop through the votes and create new entries
@@ -393,7 +327,7 @@ router.post("/places/:id/votes", async (req: Request, res: Response) => {
       )
     );
 
-    res.status(201).json({ message: "success", data: createdVotes });
+    return res.status(201).json({ message: "success", data: createdVotes });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });
@@ -409,7 +343,7 @@ router.patch("/places/:id/votes", async (req: Request, res: Response) => {
     const placeId = parseInt(req.params.id);
 
     if (!userId || !placeId || !votes) {
-      res.status(400).json({ message: "Invalid" });
+      return res.status(400).json({ message: "Invalid" });
     }
 
     // Loop through the votes and update existing entries
@@ -427,7 +361,7 @@ router.patch("/places/:id/votes", async (req: Request, res: Response) => {
       )
     );
 
-    res.status(200).json({ message: "success", data: updatedVotes });
+    return res.status(200).json({ message: "success", data: updatedVotes });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });

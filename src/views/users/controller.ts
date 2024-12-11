@@ -20,12 +20,12 @@ const getUserExperiences: Controller = async (req, res) => {
 
     let output = await UserModel.userPlacesVisited(userId);
 
-    res.send({
+    return res.send({
       message: "Success",
       data: output,
     });
   } catch (e) {
-    res.send({
+    return res.send({
       message: "Something happend getting user experiences",
     });
   }
