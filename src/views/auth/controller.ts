@@ -20,7 +20,12 @@ export const addUser: Controller = async (req, res) => {
       displayName: user.displayName || "temp",
     });
 
-    res.status(201).json({ message: "User added successfully" });
+    res.status(201).json({
+      message: "User added successfully",
+      data: {
+        displayName: user.displayName || "temp",
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Error trying to create a user" });
   }
