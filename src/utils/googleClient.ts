@@ -45,8 +45,8 @@ export default class GoogleClient {
             locationRestriction: {
               rectangle: {
                 low: {
-                  latitude: 31.357402,
-                  longitude: 128.894464,
+                  latitude: 25.254364,
+                  longitude: 123.440018,
                 },
                 high: {
                   latitude: 45.861283,
@@ -68,7 +68,7 @@ export default class GoogleClient {
       let placeTypesRestricted: { [index: string]: Array<string> } = {
         restaurant: ["restaurant"],
         shrine: ["place_of_worship"],
-        onsen: ["japanese_bath", "span", "public_bath"],
+        onsen: ["japanese_bath", "spa", "public_bath"],
       };
 
       if (!query) return [];
