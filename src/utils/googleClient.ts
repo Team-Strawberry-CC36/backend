@@ -77,8 +77,6 @@ export default class GoogleClient {
         throw new Error(`Invalid category: ${category}`);
       }
 
-      console.log("places without filter", query.length);
-
       const filteredQuery = query.filter((place) => {
         // We only care about the ones with types
         if (!place.types) return false;
@@ -88,8 +86,6 @@ export default class GoogleClient {
           place.types!.includes(value)
         );
       });
-
-      console.log("places filtered", query.length);
 
       return filteredQuery;
     } catch (e) {
