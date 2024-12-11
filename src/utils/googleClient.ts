@@ -68,7 +68,16 @@ export default class GoogleClient {
       let placeTypesRestricted: { [index: string]: Array<string> } = {
         restaurant: ["restaurant"],
         shrine: ["place_of_worship"],
-        onsen: ["japanese_bath", "spa", "public_bath"],
+        onsen: [
+          "japanese_bath",
+          "spa",
+          "public_bath",
+          "sauna",
+          "hotel",
+          "resort_hotel",
+          "inn",
+          "japanese_inn",
+        ],
       };
 
       if (!query) return [];
@@ -76,6 +85,8 @@ export default class GoogleClient {
       if (!placeTypesRestricted[category]) {
         throw new Error(`Invalid category: ${category}`);
       }
+
+      console.log(query);
 
       const filteredQuery = query.filter((place) => {
         // We only care about the ones with types
