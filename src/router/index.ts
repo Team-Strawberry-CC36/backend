@@ -79,7 +79,7 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
     if (!photos || photos.length === 0) {
       return res
         .status(404)
-        .send({ message: "No photos for this place.", data: null });
+        .send({ message: "No photos for this place.", data: [] });
     }
 
     // Generate photo URLs using Place Photos API

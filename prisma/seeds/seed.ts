@@ -36,7 +36,7 @@ async function etiquettes() {
       { place_type: "RESTAURANT", label: "Pets" },
     ],
   });
-  console.log(result);
+  console.log("Etiquettes inserted: ", result);
 }
 
 export default etiquettes;
