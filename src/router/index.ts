@@ -78,7 +78,7 @@ router.get("/places/:id/photos", async (req: Request, res: Response) => {
 
     if (!photos || photos.length === 0) {
       return res
-        .status(404)
+        .status(200)
         .send({ message: "No photos for this place.", data: [] });
     }
 
